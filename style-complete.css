@@ -475,3 +475,23 @@ h1, h2, h3, h4, h5, h6 {
         background-attachment: scroll;
     }
 }
+/* =================================
+   HIDE ADMIN PANEL BY DEFAULT
+   ================================= */
+
+.admin-panel {
+    display: none !important;
+}
+
+.admin-mode-indicator {
+    display: none !important;
+}
+
+/* Show admin panel only when body has admin class */
+body.admin-mode .admin-panel {
+    display: block !important;
+}
+
+body.admin-mode .admin-mode-indicator {
+    display: inline-block !important;
+}
