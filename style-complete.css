@@ -506,3 +506,94 @@ body.admin-mode .admin-mode-indicator {
             document.body.classList.remove('admin-mode');
         }
     }
+/* =================================
+   FIX IMAGE SIZES - RIDIMENSIONA FOTO
+   ================================= */
+
+/* Limita dimensioni immagini nella galleria */
+.gallery-grid img,
+.gallery-item img {
+    max-width: 100%;
+    max-height: 400px;
+    width: 100%;
+    height: 250px;
+    object-fit: cover;
+    border-radius: 10px;
+}
+
+/* Immagini nella sezione Donnas */
+.donnas-image-grid img,
+.donnas-images img {
+    max-width: 100%;
+    max-height: 300px;
+    height: 200px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+/* Immagini Forte di Bard */
+.attraction-images img,
+.nearby-attraction img {
+    max-width: 100%;
+    max-height: 350px;
+    height: 250px;
+    object-fit: cover;
+    border-radius: 10px;
+}
+
+/* Immagini dei Castelli */
+.castello-image img,
+.castelli-gallery img {
+    max-width: 100%;
+    max-height: 400px;
+    height: 300px;
+    object-fit: cover;
+    border-radius: 12px;
+}
+
+/* Hero Section - immagine di sfondo */
+.hero {
+    background-size: cover !important;
+    background-position: center !important;
+    min-height: 100vh;
+    max-height: 100vh;
+}
+
+/* Feature Cards Icons - non devono essere troppo grandi */
+.feature-icon i,
+.activity-icon {
+    font-size: 2.5rem;
+    max-width: 60px;
+    max-height: 60px;
+}
+
+/* Responsive - Mobile */
+@media (max-width: 768px) {
+    .gallery-grid img,
+    .gallery-item img {
+        height: 200px;
+        max-height: 300px;
+    }
+    
+    .castello-image img,
+    .castelli-gallery img {
+        height: 220px;
+        max-height: 300px;
+    }
+    
+    .donnas-image-grid img {
+        height: 180px;
+        max-height: 250px;
+    }
+    
+    .attraction-images img {
+        height: 200px;
+        max-height: 280px;
+    }
+}
+
+/* Assicura che nessuna immagine superi il contenitore */
+img {
+    max-width: 100%;
+    height: auto;
+}
