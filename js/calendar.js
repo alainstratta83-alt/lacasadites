@@ -1,5 +1,5 @@
 // Calendar functionality for La Casa di Tes booking system
-// Minimum 5 days advance notice required
+// Minimum 5 days advance notice + Minimum 5 nights stay required
 
 (function() {
     'use strict';
@@ -12,6 +12,10 @@
     let selectedCheckOut = null;
     let isAdminMode = false;
     let occupiedDates = [];
+
+    // MINIMUM NIGHTS REQUIRED
+    const MIN_NIGHTS = 5;
+    const MIN_ADVANCE_DAYS = 5;
 
     // Load occupied dates from localStorage
     function loadOccupiedDates() {
@@ -53,7 +57,7 @@
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         const minDate = new Date(today);
-        minDate.setDate(minDate.getDate() + 5);
+        minDate.setDate(minDate.getDate() + MIN_ADVANCE_DAYS);
         
         return date < minDate;
     }
@@ -199,6 +203,18 @@
         } else if (selectedCheckIn && !selectedCheckOut) {
             // Select check-out
             if (date > selectedCheckIn) {
+                // Calculate nights
+                const nights = calculateNights(selectedCheckIn, date);
+                
+                // Check minimum nights requirement
+                if (nights < MIN_NIGHTS) {
+                    alert(`Il soggiorno minimo è di ${MIN_NIGHTS} notti. Hai selezionato ${nights} notte/i. Per favore seleziona almeno ${MIN_NIGHTS} notti.`);
+                    selectedCheckIn = null;
+                    selectedCheckOut = null;
+                    renderCalendar();
+                    return;
+                }
+                
                 // Check if any dates in range are occupied
                 let hasOccupied = false;
                 const tempDate = new Date(selectedCheckIn);
