@@ -1,0 +1,970 @@
+ 1	/* ===================================
+     2	   LA CASA DI TES - Complete CSS
+     3	   Single unified stylesheet
+     4	   =================================== */
+     5	
+     6	/* ===================================
+     7	   Global Reset & Variables
+     8	   =================================== */
+     9	* {
+    10	    margin: 0;
+    11	    padding: 0;
+    12	    box-sizing: border-box;
+    13	}
+    14	
+    15	:root {
+    16	    /* Colors - Lilac, Gray & Black Theme */
+    17	    --primary-color: #9B7EBD;
+    18	    --primary-light: #C8B6D6;
+    19	    --primary-dark: #7B5FA3;
+    20	    --accent-color: #B695D4;
+    21	    
+    22	    --secondary-color: #4A4A4A;
+    23	    --light-gray: #B8B8B8;
+    24	    --medium-gray: #7A7A7A;
+    25	    
+    26	    --black: #1A1A1A;
+    27	    --soft-black: #2D2D2D;
+    28	    
+    29	    --snow-white: #FFFFFF;
+    30	    --off-white: #F7F7F7;
+    31	    --background: #FAFAFA;
+    32	    --warm-white: #FFF8F0;
+    33	    
+    34	    --text-dark: #1A1A1A;
+    35	    --text-medium: #4A4A4A;
+    36	    --text-light: #7A7A7A;
+    37	    
+    38	    --gold: #D4AF37;
+    39	    
+    40	    /* Typography */
+    41	    --font-heading: 'Playfair Display', serif;
+    42	    --font-body: 'Inter', sans-serif;
+    43	    
+    44	    /* Spacing */
+    45	    --section-padding: 80px 0;
+    46	    --container-max-width: 1200px;
+    47	    
+    48	    /* Transitions */
+    49	    --transition: all 0.3s ease;
+    50	}
+    51	
+    52	html {
+    53	    scroll-behavior: smooth;
+    54	}
+    55	
+    56	body {
+    57	    font-family: var(--font-body);
+    58	    line-height: 1.6;
+    59	    color: var(--text-dark);
+    60	    background-color: var(--background);
+    61	    padding-top: 60px;
+    62	}
+    63	
+    64	section {
+    65	    scroll-margin-top: 60px;
+    66	    position: relative;
+    67	    z-index: 10;
+    68	    background: inherit;
+    69	}
+    70	
+    71	.container {
+    72	    max-width: var(--container-max-width);
+    73	    margin: 0 auto;
+    74	    padding: 0 20px;
+    75	}
+    76	
+    77	img {
+    78	    max-width: 100%;
+    79	    height: auto;
+    80	    display: block;
+    81	}
+    82	
+    83	a {
+    84	    text-decoration: none;
+    85	    color: inherit;
+    86	    transition: var(--transition);
+    87	}
+    88	
+    89	/* ===================================
+    90	   Typography
+    91	   =================================== */
+    92	h1, h2, h3, h4, h5, h6 {
+    93	    font-family: var(--font-heading);
+    94	    font-weight: 700;
+    95	    line-height: 1.2;
+    96	    margin-bottom: 1rem;
+    97	}
+    98	
+    99	.section-title {
+   100	    font-size: 2.5rem;
+   101	    color: var(--primary-dark);
+   102	    text-align: center;
+   103	    margin-bottom: 1rem;
+   104	    position: relative;
+   105	}
+   106	
+   107	.section-title::after {
+   108	    content: '';
+   109	    display: block;
+   110	    width: 80px;
+   111	    height: 3px;
+   112	    background: linear-gradient(to right, var(--primary-color), var(--primary-light));
+   113	    margin: 20px auto;
+   114	}
+   115	
+   116	.section-subtitle {
+   117	    text-align: center;
+   118	    font-size: 1.2rem;
+   119	    color: var(--text-light);
+   120	    margin-bottom: 3rem;
+   121	}
+   122	
+   123	/* ===================================
+   124	   Buttons
+   125	   =================================== */
+   126	.btn-primary, .btn-hero, .btn-submit {
+   127	    display: inline-block;
+   128	    padding: 14px 32px;
+   129	    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+   130	    color: white;
+   131	    border: none;
+   132	    border-radius: 50px;
+   133	    font-weight: 600;
+   134	    cursor: pointer;
+   135	    transition: var(--transition);
+   136	    text-transform: uppercase;
+   137	    letter-spacing: 1px;
+   138	    font-size: 0.95rem;
+   139	}
+   140	
+   141	.btn-primary:hover, .btn-hero:hover, .btn-submit:hover {
+   142	    background: linear-gradient(135deg, var(--primary-dark), var(--soft-black));
+   143	    transform: translateY(-3px);
+   144	    box-shadow: 0 8px 25px rgba(155, 126, 189, 0.4);
+   145	}
+   146	
+   147	/* ===================================
+   148	   Navigation Bar
+   149	   =================================== */
+   150	.navbar {
+   151	    position: fixed;
+   152	    top: 0;
+   153	    left: 0;
+   154	    right: 0;
+   155	    background: rgba(255, 255, 255, 0.98);
+   156	    backdrop-filter: blur(10px);
+   157	    z-index: 1000;
+   158	    box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+   159	    transition: var(--transition);
+   160	}
+   161	
+   162	.navbar .container {
+   163	    display: flex;
+   164	    justify-content: space-between;
+   165	    align-items: center;
+   166	    padding: 15px 20px;
+   167	}
+   168	
+   169	.nav-brand {
+   170	    display: flex;
+   171	    align-items: center;
+   172	    gap: 12px;
+   173	    font-size: 1.5rem;
+   174	    font-weight: 700;
+   175	    color: var(--primary-color);
+   176	    font-family: var(--font-heading);
+   177	}
+   178	
+   179	.nav-brand i {
+   180	    font-size: 1.8rem;
+   181	    color: var(--secondary-color);
+   182	}
+   183	
+   184	.nav-toggle {
+   185	    display: none;
+   186	    flex-direction: column;
+   187	    gap: 5px;
+   188	    background: none;
+   189	    border: none;
+   190	    cursor: pointer;
+   191	    padding: 5px;
+   192	}
+   193	
+   194	.nav-toggle span {
+   195	    width: 28px;
+   196	    height: 3px;
+   197	    background: var(--primary-color);
+   198	    transition: var(--transition);
+   199	    border-radius: 2px;
+   200	}
+   201	
+   202	.nav-menu {
+   203	    display: flex;
+   204	    list-style: none;
+   205	    gap: 30px;
+   206	    align-items: center;
+   207	}
+   208	
+   209	.nav-menu a {
+   210	    color: var(--text-dark);
+   211	    font-weight: 500;
+   212	    position: relative;
+   213	    padding: 5px 0;
+   214	}
+   215	
+   216	.nav-menu a::after {
+   217	    content: '';
+   218	    position: absolute;
+   219	    bottom: 0;
+   220	    left: 0;
+   221	    width: 0;
+   222	    height: 2px;
+   223	    background: var(--accent-color);
+   224	    transition: var(--transition);
+   225	}
+   226	
+   227	.nav-menu a:hover::after {
+   228	    width: 100%;
+   229	}
+   230	
+   231	.nav-menu .btn-primary {
+   232	    padding: 10px 24px;
+   233	    font-size: 0.9rem;
+   234	}
+   235	
+   236	.language-switch {
+   237	    display: flex;
+   238	    align-items: center;
+   239	    gap: 5px;
+   240	    padding: 8px 16px;
+   241	    background: var(--off-white);
+   242	    border-radius: 20px;
+   243	    font-size: 0.9rem;
+   244	    font-weight: 600;
+   245	    color: var(--primary-color);
+   246	}
+   247	
+   248	.language-switch:hover {
+   249	    background: var(--primary-color);
+   250	    color: white;
+   251	}
+   252	
+   253	/* ===================================
+   254	   Hero Section
+   255	   =================================== */
+   256	.hero {
+   257	    height: 100vh;
+   258	    min-height: 600px;
+   259	    background-size: cover;
+   260	    background-position: center;
+   261	    background-attachment: fixed;
+   262	    display: flex;
+   263	    align-items: center;
+   264	    justify-content: center;
+   265	    position: relative;
+   266	    text-align: center;
+   267	    color: white;
+   268	}
+   269	
+   270	.hero-content {
+   271	    position: relative;
+   272	    z-index: 2;
+   273	    animation: fadeInUp 1s ease;
+   274	}
+   275	
+   276	.hero-title {
+   277	    font-size: 4.5rem;
+   278	    margin-bottom: 1rem;
+   279	    text-shadow: 2px 4px 10px rgba(26, 26, 26, 0.5);
+   280	    animation: fadeInDown 1s ease;
+   281	}
+   282	
+   283	.hero-subtitle {
+   284	    font-size: 1.8rem;
+   285	    margin-bottom: 2rem;
+   286	    font-family: var(--font-body);
+   287	    font-weight: 400;
+   288	    text-shadow: 1px 2px 5px rgba(26, 26, 26, 0.5);
+   289	}
+   290	
+   291	.hero-location {
+   292	    font-size: 1.2rem;
+   293	    margin-bottom: 2.5rem;
+   294	    display: flex;
+   295	    align-items: center;
+   296	    justify-content: center;
+   297	    gap: 10px;
+   298	}
+   299	
+   300	.hero-location i {
+   301	    color: var(--primary-light);
+   302	}
+   303	
+   304	.btn-hero {
+   305	    background: white !important;
+   306	    color: var(--primary-color) !important;
+   307	    font-size: 1.1rem;
+   308	    padding: 16px 40px;
+   309	}
+   310	
+   311	.btn-hero:hover {
+   312	    background: var(--primary-color) !important;
+   313	    color: white !important;
+   314	}
+   315	
+   316	.scroll-indicator {
+   317	    position: absolute;
+   318	    bottom: 30px;
+   319	    left: 50%;
+   320	    transform: translateX(-50%);
+   321	    animation: bounce 2s infinite;
+   322	    font-size: 2rem;
+   323	    color: white;
+   324	    cursor: pointer;
+   325	}
+   326	
+   327	@keyframes bounce {
+   328	    0%, 20%, 50%, 80%, 100% { transform: translate(-50%, 0); }
+   329	    40% { transform: translate(-50%, -10px); }
+   330	    60% { transform: translate(-50%, -5px); }
+   331	}
+   332	
+   333	@keyframes fadeInUp {
+   334	    from {
+   335	        opacity: 0;
+   336	        transform: translateY(30px);
+   337	    }
+   338	    to {
+   339	        opacity: 1;
+   340	        transform: translateY(0);
+   341	    }
+   342	}
+   343	
+   344	@keyframes fadeInDown {
+   345	    from {
+   346	        opacity: 0;
+   347	        transform: translateY(-30px);
+   348	    }
+   349	    to {
+   350	        opacity: 1;
+   351	        transform: translateY(0);
+   352	    }
+   353	}
+   354	
+   355	/* ===================================
+   356	   Welcome Section
+   357	   =================================== */
+   358	.welcome {
+   359	    padding: var(--section-padding);
+   360	    background: var(--snow-white);
+   361	}
+   362	
+   363	.welcome-content {
+   364	    max-width: 900px;
+   365	    margin: 0 auto;
+   366	    text-align: center;
+   367	}
+   368	
+   369	.welcome-text {
+   370	    font-size: 1.15rem;
+   371	    line-height: 1.8;
+   372	    color: var(--text-dark);
+   373	}
+   374	
+   375	/* ===================================
+   376	   Appartamento Section
+   377	   =================================== */
+   378	.appartamento {
+   379	    padding: var(--section-padding);
+   380	    background: var(--off-white);
+   381	}
+   382	
+   383	.features-grid {
+   384	    display: grid;
+   385	    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+   386	    gap: 30px;
+   387	    margin-top: 3rem;
+   388	}
+   389	
+   390	.feature-card {
+   391	    background: white;
+   392	    padding: 35px 25px;
+   393	    border-radius: 15px;
+   394	    text-align: center;
+   395	    transition: var(--transition);
+   396	    box-shadow: 0 4px 15px rgba(155, 126, 189, 0.15);
+   397	}
+   398	
+   399	.feature-card:hover {
+   400	    transform: translateY(-10px);
+   401	    box-shadow: 0 8px 30px rgba(155, 126, 189, 0.25);
+   402	}
+   403	
+   404	.feature-icon {
+   405	    width: 80px;
+   406	    height: 80px;
+   407	    margin: 0 auto 20px;
+   408	    display: flex;
+   409	    align-items: center;
+   410	    justify-content: center;
+   411	    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+   412	    border-radius: 50%;
+   413	    color: white;
+   414	    font-size: 2rem;
+   415	}
+   416	
+   417	.feature-card h3 {
+   418	    font-size: 1.4rem;
+   419	    color: var(--primary-color);
+   420	    margin-bottom: 15px;
+   421	}
+   422	
+   423	.feature-card p {
+   424	    color: var(--text-light);
+   425	    line-height: 1.6;
+   426	}
+   427	
+   428	.comfort-note {
+   429	    max-width: 900px;
+   430	    margin: 3rem auto 0;
+   431	    padding: 30px;
+   432	    background: linear-gradient(135deg, var(--primary-dark), var(--soft-black));
+   433	    color: white;
+   434	    border-radius: 15px;
+   435	    text-align: center;
+   436	}
+   437	
+   438	.comfort-note i {
+   439	    font-size: 2rem;
+   440	    color: var(--primary-light);
+   441	    margin-bottom: 15px;
+   442	}
+   443	
+   444	/* ===================================
+   445	   Gallery Section
+   446	   =================================== */
+   447	.gallery {
+   448	    padding: var(--section-padding);
+   449	    background: var(--snow-white);
+   450	}
+   451	
+   452	.gallery-grid {
+   453	    display: grid;
+   454	    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+   455	    gap: 25px;
+   456	    margin-top: 2rem;
+   457	}
+   458	
+   459	.gallery-item {
+   460	    position: relative;
+   461	    overflow: hidden;
+   462	    border-radius: 15px;
+   463	    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+   464	    cursor: pointer;
+   465	    transition: var(--transition);
+   466	    background: #f0f0f0;
+   467	}
+   468	
+   469	.gallery-item:hover {
+   470	    transform: translateY(-10px);
+   471	    box-shadow: 0 10px 35px rgba(155, 126, 189, 0.3);
+   472	}
+   473	
+   474	.gallery-item img {
+   475	    width: 100%;
+   476	    height: 350px;
+   477	    object-fit: cover;
+   478	    display: block;
+   479	    transition: var(--transition);
+   480	}
+   481	
+   482	.gallery-item:hover img {
+   483	    transform: scale(1.08);
+   484	}
+   485	
+   486	.gallery-caption {
+   487	    position: absolute;
+   488	    bottom: 0;
+   489	    left: 0;
+   490	    right: 0;
+   491	    background: linear-gradient(to top, rgba(42, 42, 42, 0.95), transparent);
+   492	    color: white;
+   493	    padding: 20px;
+   494	    font-weight: 600;
+   495	    font-size: 1rem;
+   496	    transform: translateY(100%);
+   497	    transition: var(--transition);
+   498	}
+   499	
+   500	.gallery-item:hover .gallery-caption {
+   501	    transform: translateY(0);
+   502	}
+   503	
+   504	/* ===================================
+   505	   Calendar Section
+   506	   =================================== */
+   507	.calendar-section {
+   508	    padding: var(--section-padding);
+   509	    background: var(--off-white);
+   510	}
+   511	
+   512	.calendar-notice {
+   513	    max-width: 800px;
+   514	    margin: 0 auto 30px;
+   515	    padding: 20px 25px;
+   516	    background: linear-gradient(135deg, #FFF3CD, #FFE69C);
+   517	    border-left: 5px solid #FF9800;
+   518	    border-radius: 10px;
+   519	    display: flex;
+   520	    align-items: center;
+   521	    gap: 15px;
+   522	    box-shadow: 0 4px 15px rgba(255, 152, 0, 0.2);
+   523	}
+   524	
+   525	.calendar-notice i {
+   526	    font-size: 2rem;
+   527	    color: #F57C00;
+   528	    flex-shrink: 0;
+   529	}
+   530	
+   531	.calendar-container {
+   532	    max-width: 900px;
+   533	    margin: 0 auto;
+   534	}
+   535	
+   536	.calendar-header {
+   537	    display: flex;
+   538	    justify-content: space-between;
+   539	    align-items: center;
+   540	    margin-bottom: 30px;
+   541	    padding: 20px;
+   542	    background: white;
+   543	    border-radius: 15px;
+   544	    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+   545	}
+   546	
+   547	.calendar-nav {
+   548	    display: flex;
+   549	    gap: 15px;
+   550	    align-items: center;
+   551	}
+   552	
+   553	.calendar-nav button {
+   554	    background: var(--primary-color);
+   555	    color: white;
+   556	    border: none;
+   557	    width: 40px;
+   558	    height: 40px;
+   559	    border-radius: 50%;
+   560	    cursor: pointer;
+   561	    font-size: 1.2rem;
+   562	    transition: var(--transition);
+   563	}
+   564	
+   565	.calendar-nav button:hover {
+   566	    background: var(--primary-dark);
+   567	    transform: scale(1.1);
+   568	}
+   569	
+   570	.calendar-month-year {
+   571	    font-size: 1.5rem;
+   572	    font-weight: 600;
+   573	    color: var(--primary-dark);
+   574	    font-family: var(--font-heading);
+   575	}
+   576	
+   577	.calendar-grid {
+   578	    background: white;
+   579	    border-radius: 15px;
+   580	    padding: 25px;
+   581	    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+   582	}
+   583	
+   584	.calendar-weekdays {
+   585	    display: grid;
+   586	    grid-template-columns: repeat(7, 1fr);
+   587	    gap: 10px;
+   588	    margin-bottom: 15px;
+   589	}
+   590	
+   591	.calendar-weekday {
+   592	    text-align: center;
+   593	    font-weight: 600;
+   594	    color: var(--primary-color);
+   595	    padding: 10px 0;
+   596	    font-size: 0.9rem;
+   597	    text-transform: uppercase;
+   598	}
+   599	
+   600	.calendar-days {
+   601	    display: grid;
+   602	    grid-template-columns: repeat(7, 1fr);
+   603	    gap: 10px;
+   604	}
+   605	
+   606	.calendar-day {
+   607	    aspect-ratio: 1;
+   608	    display: flex;
+   609	    align-items: center;
+   610	    justify-content: center;
+   611	    border-radius: 10px;
+   612	    font-weight: 500;
+   613	    font-size: 1rem;
+   614	    cursor: pointer;
+   615	    transition: var(--transition);
+   616	    position: relative;
+   617	    border: 2px solid transparent;
+   618	}
+   619	
+   620	.calendar-day.empty {
+   621	    cursor: default;
+   622	    pointer-events: none;
+   623	}
+   624	
+   625	.calendar-day.available {
+   626	    background: #E8F5E9;
+   627	    color: #2E7D32;
+   628	    border-color: #4CAF50;
+   629	}
+   630	
+   631	.calendar-day.available:hover {
+   632	    background: #C8E6C9;
+   633	    transform: scale(1.05);
+   634	}
+   635	
+   636	.calendar-day.occupied {
+   637	    background: #FFEBEE;
+   638	    color: #C62828;
+   639	    border-color: #EF5350;
+   640	}
+   641	
+   642	.calendar-day.today {
+   643	    font-weight: 700;
+   644	    box-shadow: 0 0 0 3px var(--primary-light);
+   645	}
+   646	
+   647	.calendar-day.selected-start,
+   648	.calendar-day.selected-end {
+   649	    background: var(--primary-color);
+   650	    color: white;
+   651	    border-color: var(--primary-dark);
+   652	    font-weight: 700;
+   653	}
+   654	
+   655	.calendar-day.in-range {
+   656	    background: var(--primary-light);
+   657	    color: var(--primary-dark);
+   658	}
+   659	
+   660	.calendar-legend {
+   661	    display: flex;
+   662	    justify-content: center;
+   663	    gap: 30px;
+   664	    margin-top: 25px;
+   665	    padding: 20px;
+   666	    background: var(--background);
+   667	    border-radius: 10px;
+   668	}
+   669	
+   670	.legend-item {
+   671	    display: flex;
+   672	    align-items: center;
+   673	    gap: 10px;
+   674	    font-size: 0.95rem;
+   675	}
+   676	
+   677	.legend-color {
+   678	    width: 25px;
+   679	    height: 25px;
+   680	    border-radius: 8px;
+   681	    border: 2px solid;
+   682	}
+   683	
+   684	.legend-color.available {
+   685	    background: #E8F5E9;
+   686	    border-color: #4CAF50;
+   687	}
+   688	
+   689	.legend-color.occupied {
+   690	    background: #FFEBEE;
+   691	    border-color: #EF5350;
+   692	}
+   693	
+   694	.legend-color.unavailable {
+   695	    background: #F5F5F5;
+   696	    border-color: #9E9E9E;
+   697	    opacity: 0.6;
+   698	}
+   699	
+   700	.booking-info-box {
+   701	    margin-top: 30px;
+   702	    padding: 25px;
+   703	    background: linear-gradient(135deg, var(--primary-light), var(--primary-color));
+   704	    color: white;
+   705	    border-radius: 15px;
+   706	    text-align: center;
+   707	}
+   708	
+   709	/* ===================================
+   710	   Scroll to Top Button
+   711	   =================================== */
+   712	.scroll-top {
+   713	    position: fixed;
+   714	    bottom: 30px;
+   715	    right: 30px;
+   716	    width: 50px;
+   717	    height: 50px;
+   718	    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+   719	    color: white;
+   720	    border: none;
+   721	    border-radius: 50%;
+   722	    font-size: 1.5rem;
+   723	    cursor: pointer;
+   724	    opacity: 0;
+   725	    visibility: hidden;
+   726	    transition: var(--transition);
+   727	    z-index: 999;
+   728	}
+   729	
+   730	.scroll-top.visible {
+   731	    opacity: 1;
+   732	    visibility: visible;
+   733	}
+   734	
+   735	.scroll-top:hover {
+   736	    transform: translateY(-5px);
+   737	    box-shadow: 0 8px 25px rgba(155, 126, 189, 0.4);
+   738	}
+   739	
+   740	/* ===================================
+   741	   Footer
+   742	   =================================== */
+   743	.footer {
+   744	    background: linear-gradient(135deg, var(--soft-black), var(--black));
+   745	    color: white;
+   746	    padding: 60px 0 30px;
+   747	}
+   748	
+   749	.footer-content {
+   750	    display: grid;
+   751	    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+   752	    gap: 40px;
+   753	    margin-bottom: 40px;
+   754	}
+   755	
+   756	.footer-section h3 {
+   757	    color: white;
+   758	    margin-bottom: 20px;
+   759	    font-size: 1.3rem;
+   760	}
+   761	
+   762	.footer-section p,
+   763	.footer-section a {
+   764	    color: rgba(255, 255, 255, 0.8);
+   765	    line-height: 1.8;
+   766	    display: block;
+   767	    margin: 10px 0;
+   768	}
+   769	
+   770	.footer-section a:hover {
+   771	    color: var(--primary-light);
+   772	}
+   773	
+   774	.social-links {
+   775	    display: flex;
+   776	    gap: 15px;
+   777	    margin-top: 20px;
+   778	}
+   779	
+   780	.social-links a {
+   781	    width: 40px;
+   782	    height: 40px;
+   783	    display: flex;
+   784	    align-items: center;
+   785	    justify-content: center;
+   786	    background: rgba(255, 255, 255, 0.1);
+   787	    border-radius: 50%;
+   788	    transition: var(--transition);
+   789	}
+   790	
+   791	.social-links a:hover {
+   792	    background: var(--primary-color);
+   793	    transform: translateY(-3px);
+   794	}
+   795	
+   796	.footer-bottom {
+   797	    text-align: center;
+   798	    padding-top: 30px;
+   799	    border-top: 1px solid rgba(255, 255, 255, 0.1);
+   800	    color: rgba(255, 255, 255, 0.6);
+   801	}
+   802	
+   803	/* ===================================
+   804	   Responsive Design
+   805	   =================================== */
+   806	@media (max-width: 968px) {
+   807	    .nav-menu {
+   808	        position: fixed;
+   809	        top: 60px;
+   810	        left: -100%;
+   811	        width: 100%;
+   812	        height: calc(100vh - 60px);
+   813	        background: white;
+   814	        flex-direction: column;
+   815	        padding: 40px 20px;
+   816	        transition: var(--transition);
+   817	        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+   818	    }
+   819	    
+   820	    .nav-menu.active {
+   821	        left: 0;
+   822	    }
+   823	    
+   824	    .nav-toggle {
+   825	        display: flex;
+   826	    }
+   827	    
+   828	    .hero-title {
+   829	        font-size: 3rem;
+   830	    }
+   831	    
+   832	    .hero-subtitle {
+   833	        font-size: 1.4rem;
+   834	    }
+   835	    
+   836	    .section-title {
+   837	        font-size: 2rem;
+   838	    }
+   839	    
+   840	    .features-grid {
+   841	        grid-template-columns: 1fr;
+   842	    }
+   843	    
+   844	    .gallery-grid {
+   845	        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+   846	    }
+   847	    
+   848	    .calendar-header {
+   849	        flex-direction: column;
+   850	        gap: 15px;
+   851	    }
+   852	}
+   853	
+   854	@media (max-width: 768px) {
+   855	    body {
+   856	        padding-top: 60px;
+   857	    }
+   858	    
+   859	    .hero {
+   860	        height: 80vh;
+   861	        min-height: 500px;
+   862	        background-attachment: scroll;
+   863	    }
+   864	    
+   865	    .hero-title {
+   866	        font-size: 2.5rem;
+   867	    }
+   868	    
+   869	    .hero-subtitle {
+   870	        font-size: 1.2rem;
+   871	    }
+   872	    
+   873	    .section-title {
+   874	        font-size: 1.8rem;
+   875	    }
+   876	    
+   877	    .gallery-grid {
+   878	        grid-template-columns: 1fr;
+   879	        gap: 20px;
+   880	    }
+   881	    
+   882	    .gallery-item img {
+   883	        height: 280px;
+   884	    }
+   885	    
+   886	    .gallery-caption {
+   887	        transform: translateY(0);
+   888	        background: linear-gradient(to top, rgba(42, 42, 42, 0.85), transparent);
+   889	        font-size: 0.95rem;
+   890	        padding: 15px;
+   891	    }
+   892	    
+   893	    .calendar-day {
+   894	        font-size: 0.9rem;
+   895	    }
+   896	    
+   897	    .calendar-legend {
+   898	        flex-direction: column;
+   899	        gap: 15px;
+   900	        align-items: center;
+   901	    }
+   902	}
+   903	
+   904	@media (max-width: 480px) {
+   905	    .hero-title {
+   906	        font-size: 2rem;
+   907	    }
+   908	    
+   909	    .hero-subtitle {
+   910	        font-size: 1rem;
+   911	    }
+   912	    
+   913	    .btn-hero {
+   914	        font-size: 0.95rem;
+   915	        padding: 12px 30px;
+   916	    }
+   917	    
+   918	    .section-title {
+   919	        font-size: 1.6rem;
+   920	    }
+   921	    
+   922	    .feature-card {
+   923	        padding: 25px 20px;
+   924	    }
+   925	    
+   926	    .gallery-item img {
+   927	        height: 250px;
+   928	    }
+   929	    
+   930	    .calendar-grid {
+   931	        padding: 15px;
+   932	    }
+   933	    
+   934	    .calendar-days {
+   935	        gap: 5px;
+   936	    }
+   937	    
+   938	    .calendar-day {
+   939	        font-size: 0.85rem;
+   940	    }
+   941	}
+   942	
+   943	/* ===================================
+   944	   Utility Classes
+   945	   =================================== */
+   946	.text-center { text-align: center; }
+   947	.mt-1 { margin-top: 1rem; }
+   948	.mt-2 { margin-top: 2rem; }
+   949	.mb-1 { margin-bottom: 1rem; }
+   950	.mb-2 { margin-bottom: 2rem; }
+   951	.hidden { display: none !important; }
+   952	
+   953	/* ===================================
+   954	   Print Styles
+   955	   =================================== */
+   956	@media print {
+   957	    .navbar, .scroll-top, .btn-hero, .calendar-section {
+   958	        display: none !important;
+   959	    }
+   960	    
+   961	    body {
+   962	        padding-top: 0;
+   963	    }
+   964	    
+   965	    .hero {
+   966	        height: auto;
+   967	        padding: 50px 0;
+   968	    }
+   969	}
+   970	
