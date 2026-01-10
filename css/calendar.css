@@ -1,0 +1,249 @@
+/* Calendar Styles */
+
+.calendar-section {
+    padding: 80px 0;
+    background: #f8f9fa;
+}
+
+.calendar-container {
+    max-width: 900px;
+    margin: 0 auto;
+    background: white;
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+}
+
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #e0e0e0;
+}
+
+.calendar-header h3 {
+    font-size: 1.8rem;
+    color: #9B7EBD;
+    margin: 0;
+}
+
+.calendar-nav {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: #9B7EBD;
+    cursor: pointer;
+    padding: 10px;
+    transition: all 0.3s ease;
+}
+
+.calendar-nav:hover {
+    color: #7B5FA3;
+    transform: scale(1.1);
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 10px;
+    margin-bottom: 30px;
+}
+
+.calendar-day {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    background: #f5f5f5;
+}
+
+.calendar-day:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.calendar-day.available {
+    background: #d4edda;
+    color: #155724;
+}
+
+.calendar-day.booked {
+    background: #f8d7da;
+    color: #721c24;
+    cursor: not-allowed;
+}
+
+.calendar-day.selected {
+    background: #9B7EBD;
+    color: white;
+}
+
+.calendar-legend {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 10px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.legend-color {
+    width: 20px;
+    height: 20px;
+    border-radius: 5px;
+}
+
+.legend-color.available {
+    background: #d4edda;
+}
+
+.legend-color.booked {
+    background: #f8d7da;
+}
+
+.legend-color.selected {
+    background: #9B7EBD;
+}
+
+.legend-color.too-soon {
+    background: #e0e0e0;
+}
+
+.calendar-notice {
+    background: #fff3cd;
+    border-left: 4px solid #ffc107;
+    padding: 20px;
+    margin-bottom: 30px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.calendar-notice i {
+    font-size: 1.5rem;
+    color: #856404;
+}
+
+.admin-panel {
+    margin-top: 40px;
+    padding: 30px;
+    background: #f8f9fa;
+    border-radius: 15px;
+    border: 2px dashed #9B7EBD;
+}
+
+.admin-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.admin-header h3 {
+    color: #9B7EBD;
+    margin: 0;
+}
+
+.admin-instructions {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+
+.admin-instructions ul {
+    margin-left: 20px;
+}
+
+.admin-instructions li {
+    margin: 10px 0;
+}
+
+.admin-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.btn-save,
+.btn-export,
+.btn-clear {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-save {
+    background: #28a745;
+    color: white;
+}
+
+.btn-save:hover {
+    background: #218838;
+    transform: translateY(-2px);
+}
+
+.btn-export {
+    background: #17a2b8;
+    color: white;
+}
+
+.btn-export:hover {
+    background: #138496;
+    transform: translateY(-2px);
+}
+
+.btn-clear {
+    background: #dc3545;
+    color: white;
+}
+
+.btn-clear:hover {
+    background: #c82333;
+    transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+    .calendar-container {
+        padding: 20px;
+    }
+    
+    .calendar-grid {
+        gap: 5px;
+    }
+    
+    .calendar-day {
+        font-size: 0.9rem;
+    }
+    
+    .admin-actions {
+        flex-direction: column;
+    }
+    
+    .btn-save,
+    .btn-export,
+    .btn-clear {
+        width: 100%;
+        justify-content: center;
+    }
+}

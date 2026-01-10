@@ -1,0 +1,59 @@
+/* Theme: Lilac & Gray */
+
+:root {
+    --lilac-primary: #9B7EBD;
+    --lilac-secondary: #C8B8DB;
+    --lilac-dark: #7B5FA3;
+    --lilac-light: #E6DFF0;
+    
+    --gray-primary: #4A4A4A;
+    --gray-secondary: #6B6B6B;
+    --gray-light: #E5E5E5;
+    --gray-dark: #2A2A2A;
+}
+
+body {
+    color: var(--gray-primary);
+}
+
+.section-title {
+    color: var(--lilac-primary);
+}
+
+.btn-primary,
+.btn-hero {
+    background: linear-gradient(135deg, var(--lilac-primary), var(--lilac-dark));
+}
+
+.btn-primary:hover,
+.btn-hero:hover {
+    background: linear-gradient(135deg, var(--lilac-dark), var(--lilac-primary));
+}
+
+.feature-icon {
+    background: linear-gradient(135deg, var(--lilac-primary), var(--lilac-secondary));
+}
+
+.navbar {
+    background: rgba(255, 255, 255, 0.98);
+}
+
+.nav-brand {
+    color: var(--lilac-primary);
+}
+
+.nav-menu a:hover {
+    color: var(--lilac-primary);
+}
+
+.footer {
+    background: linear-gradient(135deg, var(--gray-dark), var(--gray-primary));
+}
+
+a {
+    color: var(--lilac-primary);
+}
+
+a:hover {
+    color: var(--lilac-dark);
+}
