@@ -352,24 +352,20 @@
     // Check if admin access is enabled
     function checkAdminAccess() {
         const urlParams = new URLSearchParams(window.location.search);
-        const adminPanel = document.querySelector('.admin-panel');
         
-        // Hide admin panel by default
-        if (adminPanel) {
-            // Only show if URL has ?admin=true parameter
-            if (urlParams.get('admin') === 'true') {
-                adminPanel.style.display = 'block';
-            } else {
-                adminPanel.style.display = 'none';
-            }
+        // Check if URL has ?admin=true parameter
+        if (urlParams.get('admin') === 'true') {
+            document.body.classList.add('admin-mode');
+        } else {
+            document.body.classList.remove('admin-mode');
         }
     }
 
     // Initialize calendar
     function initCalendar() {
         loadOccupiedDates();
-        renderCalendar();
         checkAdminAccess(); // Check if admin panel should be visible
+        renderCalendar();
 
         // Event listeners
         const prevMonthBtn = document.getElementById('prevMonth');
