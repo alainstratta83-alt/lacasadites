@@ -495,3 +495,14 @@ body.admin-mode .admin-panel {
 body.admin-mode .admin-mode-indicator {
     display: inline-block !important;
 }
+ // Check if admin access is enabled
+    function checkAdminAccess() {
+        const urlParams = new URLSearchParams(window.location.search);
+        
+        // Check if URL has ?admin=true parameter
+        if (urlParams.get('admin') === 'true') {
+            document.body.classList.add('admin-mode');
+        } else {
+            document.body.classList.remove('admin-mode');
+        }
+    }
