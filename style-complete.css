@@ -1011,6 +1011,26 @@ body.admin-mode .admin-mode-indicator {
     gap: 15px;
 }
 
+.donnas-image-single {
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.donnas-image-single img {
+    width: 100%;
+    height: 400px;
+    object-fit: cover;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    transition: var(--transition);
+}
+
+.donnas-image-single img:hover {
+    transform: scale(1.05);
+    box-shadow: 0 8px 25px rgba(155, 126, 189, 0.3);
+}
+
 .donnas-image-grid img {
     width: 100%;
     height: 300px;
