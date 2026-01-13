@@ -1,415 +1,929 @@
-// ===================================
-// Calendar System - La Casa di Tes
-// ENGLISH VERSION
-// ===================================
-
-// ⚙️ MINIMUM STAY CONFIGURATION
-// ====================================
-const MINIMUM_NIGHTS = 3; // 🔧 MODIFY THIS NUMBER TO CHANGE MINIMUM STAY
-
-// ⚙️ ADVANCE NOTICE CONFIGURATION
-// ====================================
-const ADVANCE_NOTICE_DAYS = 5; // 🔧 MODIFY THIS NUMBER TO CHANGE ADVANCE NOTICE
-
-class BookingCalendar {
-    constructor() {
-        this.currentDate = new Date();
-        this.selectedStartDate = null;
-        this.selectedEndDate = null;
-        this.occupiedDates = this.loadOccupiedDates();
-        this.adminMode = false;
-        this.minimumNights = MINIMUM_NIGHTS;
-        this.advanceNoticeDays = ADVANCE_NOTICE_DAYS;
-        this.init();
-    }
-
-    init() {
-        this.renderCalendar();
-        this.setupEventListeners();
-        this.updateBookingInfo();
-    }
-
-    loadOccupiedDates() {
-        const saved = localStorage.getItem('casadiTesOccupiedDates');
-        if (saved) {
-            return new Set(JSON.parse(saved));
-        }
-        return new Set([
-            '2026-01-15',
-            '2026-01-16',
-            '2026-01-17',
-            '2026-02-14',
-            '2026-02-15',
-        ]);
-    }
-
-    saveOccupiedDates() {
-        localStorage.setItem('casadiTesOccupiedDates', 
-            JSON.stringify([...this.occupiedDates]));
-        this.showNotification('✅ Availability saved!', 'success');
-    }
-
-    renderCalendar() {
-        const year = this.currentDate.getFullYear();
-        const month = this.currentDate.getMonth();
-        
-        const monthNames = [
-            'January', 'February', 'March', 'April', 'May', 'June',
-            'July', 'August', 'September', 'October', 'November', 'December'
-        ];
-        document.getElementById('calendarMonthYear').textContent = 
-            `${monthNames[month]} ${year}`;
-
-        const firstDay = new Date(year, month, 1).getDay();
-        const daysInMonth = new Date(year, month + 1, 0).getDate();
-        const adjustedFirstDay = firstDay === 0 ? 6 : firstDay - 1;
-
-        const daysContainer = document.getElementById('calendarDays');
-        daysContainer.innerHTML = '';
-
-        for (let i = 0; i < adjustedFirstDay; i++) {
-            const emptyDay = document.createElement('div');
-            emptyDay.className = 'calendar-day empty';
-            daysContainer.appendChild(emptyDay);
-        }
-
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        
-        const minBookableDate = new Date(today);
-        minBookableDate.setDate(minBookableDate.getDate() + this.advanceNoticeDays);
-        minBookableDate.setHours(0, 0, 0, 0);
-
-        for (let day = 1; day <= daysInMonth; day++) {
-            const dayElement = document.createElement('div');
-            dayElement.className = 'calendar-day';
-            dayElement.textContent = day;
-            
-            const currentDayDate = new Date(year, month, day);
-            currentDayDate.setHours(0, 0, 0, 0);
-            const dateString = this.formatDate(currentDayDate);
-
-            if (currentDayDate < minBookableDate) {
-                dayElement.classList.add('occupied');
-                dayElement.style.opacity = '0.4';
-                dayElement.style.cursor = 'not-allowed';
-                if (currentDayDate >= today && currentDayDate < minBookableDate) {
-                    dayElement.title = `${this.advanceNoticeDays} days advance notice required`;
-                }
-            } else {
-                if (this.occupiedDates.has(dateString)) {
-                    dayElement.classList.add('occupied');
-                } else {
-                    dayElement.classList.add('available');
-                }
-
-                if (currentDayDate.getTime() === today.getTime()) {
-                    dayElement.classList.add('today');
-                }
-
-                if (this.selectedStartDate && this.selectedEndDate) {
-                    const start = new Date(this.selectedStartDate);
-                    const end = new Date(this.selectedEndDate);
-                    
-                    if (currentDayDate.getTime() === start.getTime()) {
-                        dayElement.classList.add('selected-start');
-                    } else if (currentDayDate.getTime() === end.getTime()) {
-                        dayElement.classList.add('selected-end');
-                    } else if (currentDayDate > start && currentDayDate < end) {
-                        dayElement.classList.add('in-range');
-                    }
-                }
-
-                dayElement.addEventListener('click', () => {
-                    this.handleDayClick(currentDayDate, dateString);
-                });
-            }
-
-            daysContainer.appendChild(dayElement);
-        }
-    }
-
-    handleDayClick(date, dateString) {
-        if (this.adminMode) {
-            if (this.occupiedDates.has(dateString)) {
-                this.occupiedDates.delete(dateString);
-            } else {
-                this.occupiedDates.add(dateString);
-            }
-            this.renderCalendar();
-        } else {
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            const minBookableDate = new Date(today);
-            minBookableDate.setDate(minBookableDate.getDate() + this.advanceNoticeDays);
-            minBookableDate.setHours(0, 0, 0, 0);
-            
-            if (date < minBookableDate) {
-                const daysUntil = Math.ceil((date - today) / (1000 * 60 * 60 * 24));
-                if (daysUntil < this.advanceNoticeDays && daysUntil >= 0) {
-                    this.showNotification(`⏰ ${this.advanceNoticeDays} days advance notice required. This date is too soon (${daysUntil} days)`, 'error');
-                } else {
-                    this.showNotification('❌ Date in the past', 'error');
-                }
-                return;
-            }
-            
-            const isOccupied = this.occupiedDates.has(dateString);
-            
-            if (isOccupied) {
-                this.showNotification('❌ This date is not available', 'error');
-                return;
-            }
-
-            if (!this.selectedStartDate || (this.selectedStartDate && this.selectedEndDate)) {
-                this.selectedStartDate = date;
-                this.selectedEndDate = null;
-            } else if (date < this.selectedStartDate) {
-                this.selectedEndDate = this.selectedStartDate;
-                this.selectedStartDate = date;
-                
-                const nights = Math.ceil((this.selectedEndDate - this.selectedStartDate) / (1000 * 60 * 60 * 24));
-                if (nights < this.minimumNights) {
-                    this.showNotification(`⚠️ Minimum stay required: ${this.minimumNights} nights. You selected ${nights} night(s).`, 'error');
-                    this.selectedStartDate = null;
-                    this.selectedEndDate = null;
-                    this.renderCalendar();
-                    this.updateBookingInfo();
-                    return;
-                }
-            } else {
-                this.selectedEndDate = date;
-                
-                const nights = Math.ceil((this.selectedEndDate - this.selectedStartDate) / (1000 * 60 * 60 * 24));
-                if (nights < this.minimumNights) {
-                    this.showNotification(`⚠️ Minimum stay required: ${this.minimumNights} nights. You selected ${nights} night(s).`, 'error');
-                    this.selectedStartDate = null;
-                    this.selectedEndDate = null;
-                    this.renderCalendar();
-                    this.updateBookingInfo();
-                    return;
-                }
-                
-                if (this.hasOccupiedInRange(this.selectedStartDate, this.selectedEndDate)) {
-                    this.showNotification('❌ There are occupied dates in the selected period', 'error');
-                    this.selectedStartDate = null;
-                    this.selectedEndDate = null;
-                }
-            }
-            
-            this.renderCalendar();
-            this.updateBookingInfo();
-        }
-    }
-
-    hasOccupiedInRange(start, end) {
-        const current = new Date(start);
-        current.setDate(current.getDate() + 1);
-        
-        while (current < end) {
-            const dateString = this.formatDate(current);
-            if (this.occupiedDates.has(dateString)) {
-                return true;
-            }
-            current.setDate(current.getDate() + 1);
-        }
-        return false;
-    }
-
-    updateBookingInfo() {
-        const infoBox = document.getElementById('bookingInfoBox');
-        
-        if (this.selectedStartDate && this.selectedEndDate) {
-            const nights = Math.ceil((this.selectedEndDate - this.selectedStartDate) / (1000 * 60 * 60 * 24));
-            
-            document.getElementById('checkInDate').textContent = 
-                this.formatDateDisplay(this.selectedStartDate);
-            document.getElementById('checkOutDate').textContent = 
-                this.formatDateDisplay(this.selectedEndDate);
-            document.getElementById('nightsCount').textContent = nights;
-            
-            infoBox.style.display = 'block';
-        } else {
-            infoBox.style.display = 'none';
-        }
-    }
-
-    setupEventListeners() {
-        document.getElementById('prevMonth').addEventListener('click', () => {
-            this.currentDate.setMonth(this.currentDate.getMonth() - 1);
-            this.renderCalendar();
-        });
-
-        document.getElementById('nextMonth').addEventListener('click', () => {
-            this.currentDate.setMonth(this.currentDate.getMonth() + 1);
-            this.renderCalendar();
-        });
-
-        document.getElementById('resetDates').addEventListener('click', () => {
-            this.selectedStartDate = null;
-            this.selectedEndDate = null;
-            this.renderCalendar();
-            this.updateBookingInfo();
-        });
-
-        document.getElementById('bookNow').addEventListener('click', () => {
-            if (this.selectedStartDate && this.selectedEndDate) {
-                const bookingForm = document.getElementById('prenota');
-                bookingForm.scrollIntoView({ behavior: 'smooth' });
-                
-                const checkinInput = document.getElementById('checkin');
-                const checkoutInput = document.getElementById('checkout');
-                
-                if (checkinInput && checkoutInput) {
-                    checkinInput.value = this.formatDate(this.selectedStartDate);
-                    checkoutInput.value = this.formatDate(this.selectedEndDate);
-                }
-                
-                this.showNotification('✅ Dates selected! Fill in the form below', 'success');
-            }
-        });
-
-        const toggleAdmin = document.getElementById('toggleAdminMode');
-        if (toggleAdmin) {
-            toggleAdmin.addEventListener('click', () => {
-                this.adminMode = !this.adminMode;
-                const indicator = document.getElementById('adminModeIndicator');
-                const adminPanel = document.querySelector('.admin-panel');
-                
-                if (this.adminMode) {
-                    indicator.textContent = '🔧 ADMIN MODE ACTIVE';
-                    indicator.style.background = '#FFE69C';
-                    adminPanel.style.border = '3px solid #FF9800';
-                    this.showNotification('🔧 Admin Mode: Click days to modify availability', 'info');
-                } else {
-                    indicator.textContent = '👤 Guest Mode';
-                    indicator.style.background = '#E0E0E0';
-                    adminPanel.style.border = '3px dashed var(--primary-color)';
-                }
-                
-                this.selectedStartDate = null;
-                this.selectedEndDate = null;
-                this.renderCalendar();
-                this.updateBookingInfo();
-            });
-        }
-
-        const saveBtn = document.getElementById('saveAvailability');
-        if (saveBtn) {
-            saveBtn.addEventListener('click', () => {
-                this.saveOccupiedDates();
-            });
-        }
-
-        const clearBtn = document.getElementById('clearOccupied');
-        if (clearBtn) {
-            clearBtn.addEventListener('click', () => {
-                if (confirm('Are you sure you want to clear ALL dates?')) {
-                    this.occupiedDates.clear();
-                    this.saveOccupiedDates();
-                    this.renderCalendar();
-                }
-            });
-        }
-
-        const exportBtn = document.getElementById('exportCalendar');
-        if (exportBtn) {
-            exportBtn.addEventListener('click', () => {
-                this.exportCalendar();
-            });
-        }
-    }
-
-    exportCalendar() {
-        const data = {
-            occupiedDates: [...this.occupiedDates],
-            exportDate: new Date().toISOString(),
-            property: 'La Casa di Tes - Donnas'
-        };
-        
-        const dataStr = JSON.stringify(data, null, 2);
-        const dataBlob = new Blob([dataStr], { type: 'application/json' });
-        const url = URL.createObjectURL(dataBlob);
-        
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `calendar-casa-tes-${new Date().toISOString().split('T')[0]}.json`;
-        link.click();
-        
-        URL.revokeObjectURL(url);
-        this.showNotification('📥 Calendar exported!', 'success');
-    }
-
-    showNotification(message, type) {
-        const notification = document.createElement('div');
-        notification.className = `notification ${type}`;
-        notification.textContent = message;
-        notification.style.cssText = `
-            position: fixed;
-            top: 100px;
-            right: 20px;
-            padding: 15px 25px;
-            background: ${type === 'success' ? '#4CAF50' : type === 'error' ? '#F44336' : '#2196F3'};
-            color: white;
-            border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            z-index: 10000;
-            font-weight: 600;
-            animation: slideIn 0.3s ease;
-        `;
-        
-        document.body.appendChild(notification);
-        
-        setTimeout(() => {
-            notification.style.animation = 'slideOut 0.3s ease';
-            setTimeout(() => notification.remove(), 300);
-        }, 3000);
-    }
-
-    formatDate(date) {
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
-    }
-
-    formatDateDisplay(date) {
-        const day = date.getDate();
-        const month = date.getMonth() + 1;
-        const year = date.getFullYear();
-        return `${month}/${day}/${year}`;
-    }
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-    if (document.getElementById('calendarDays')) {
-        window.bookingCalendar = new BookingCalendar();
-        console.log('📅 Booking calendar initialized');
-    }
-});
-
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes slideIn {
-        from {
-            transform: translateX(400px);
-            opacity: 0;
-        }
-        to {
-            transform: translateX(0);
-            opacity: 1;
-        }
-    }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="La Casa di Tes - Holiday Apartment in Donnas, Aosta Valley. Your refuge between history, vineyards and mountains.">
+    <meta name="keywords" content="apartment Aosta Valley, Donnas, mountain holidays, vineyards, alpine tourism">
+    <title>La Casa di Tes - Donnas, Aosta Valley</title>
     
-    @keyframes slideOut {
-        from {
-            transform: translateX(0);
-            opacity: 1;
-        }
-        to {
-            transform: translateX(400px);
-            opacity: 0;
-        }
-    }
-`;
-document.head.appendChild(style);
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style-complete.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <i class="fas fa-mountain"></i>
+                <span>La Casa di Tes</span>
+            </div>
+            <button class="nav-toggle" id="navToggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <ul class="nav-menu" id="navMenu">
+                <li><a href="#home">Home</a></li>
+                <li><a href="#appartamento">The Apartment</a></li>
+                <li><a href="#gallery">Gallery</a></li>
+                <li><a href="#calendario">Availability</a></li>
+                <li><a href="#posizione">Location</a></li>
+                <li><a href="#donnas">Donnas</a></li>
+                <li><a href="#attivita">Activities</a></li>
+                <li><a href="#castelli">Castles</a></li>
+                <li><a href="#prezzi">Rates</a></li>
+                <li><a href="#prenota" class="btn-primary">Book Now</a></li>
+                <li><a href="index.html" class="language-switch" title="Switch to Italian"><i class="fas fa-globe"></i> IT</a></li>
+                <li><a href="index-fr.html" class="language-switch" title="Passer au Français"><i class="fas fa-globe"></i> FR</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="home" class="hero" style="background-image: linear-gradient(135deg, rgba(155, 126, 189, 0.75), rgba(42, 42, 42, 0.75)), url('images/vista-panoramica.jpg');">
+        <div class="hero-overlay"></div>
+        <div class="hero-content">
+            <h1 class="hero-title">La Casa di Tes</h1>
+            <p class="hero-subtitle">Your "Refuge" between History, Vineyards and Mountains</p>
+            <p class="hero-location"><i class="fas fa-map-marker-alt"></i> Donnas, Aosta Valley</p>
+            <a href="#prenota" class="btn-hero">Book Your Stay</a>
+        </div>
+        <div class="scroll-indicator">
+            <i class="fas fa-chevron-down"></i>
+        </div>
+    </section>
+
+    <!-- Welcome Section -->
+    <section class="welcome">
+        <div class="container">
+            <div class="welcome-content">
+                <h2 class="section-title">Welcome to the Lower Aosta Valley</h2>
+                <p class="welcome-text">
+                    La Casa di Tes welcomes you to the heart of the lower Aosta Valley, offering an authentic 
+                    experience immersed in the tranquility of Donnas. This cozy apartment with <strong>breathtaking 
+                    mountain views</strong> is the ideal base for exploring one of the most fascinating 
+                    regions of the Italian Alps.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- L'Appartamento Section -->
+    <section id="appartamento" class="appartamento">
+        <div class="container">
+            <h2 class="section-title">The Apartment</h2>
+            <p class="section-description">
+                A bright and comfortable space designed for your relaxation. Every detail has been carefully thought out 
+                to guarantee you an unforgettable stay in the heart of the Aosta Valley.
+            </p>
+            
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-bed"></i>
+                    </div>
+                    <h3>Comfortable Bedrooms</h3>
+                    <p>2 bedrooms: 1 double room and 1 twin room with 2 single beds</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-bath"></i>
+                    </div>
+                    <h3>Modern Bathroom</h3>
+                    <p>Complete bathroom with shower and bidet, equipped with all amenities</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-tv"></i>
+                    </div>
+                    <h3>Living Room with TV</h3>
+                    <p>Cozy living room with TV and Netflix for your entertainment</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-utensils"></i>
+                    </div>
+                    <h3>Equipped Kitchen</h3>
+                    <p>Refrigerator, kettle, induction hob - everything you need</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-wifi"></i>
+                    </div>
+                    <h3>Free WiFi</h3>
+                    <p>Fast and reliable internet connection throughout the apartment</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-leaf"></i>
+                    </div>
+                    <h3>Private Garden</h3>
+                    <p>Outdoor space with mountain view, sun loungers, table and BBQ</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-car"></i>
+                    </div>
+                    <h3>Free Parking</h3>
+                    <p>Private parking space included for your convenience</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-home"></i>
+                    </div>
+                    <h3>All Inclusive</h3>
+                    <p>Bed linen, towels and all amenities included</p>
+                </div>
+            </div>
+
+            <div class="highlight-box">
+                <i class="fas fa-star"></i>
+                <p><strong>Ideal for families and couples</strong> - The apartment can comfortably accommodate up to 4 guests, 
+                with all the comforts for an unforgettable stay in the mountains.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Gallery Section -->
+    <section id="gallery" class="gallery-section">
+        <div class="container">
+            <h2 class="section-title">Photo Gallery</h2>
+            <p class="section-description">Discover the spaces of La Casa di Tes and the beauty of the surrounding area</p>
+            
+            <div class="gallery-grid">
+                <div class="gallery-item">
+                    <img src="images/esterno-casa.jpg" alt="Exterior of the house" loading="lazy">
+                    <div class="gallery-caption">Exterior View</div>
+                </div>
+                <div class="gallery-item">
+                    <img src="images/ingresso-esterno.jpg" alt="External entrance" loading="lazy">
+                    <div class="gallery-caption">Entrance</div>
+                </div>
+                <div class="gallery-item">
+                    <img src="images/soggiorno-camino.jpg" alt="Living room with pellet stove" loading="lazy">
+                    <div class="gallery-caption">Living Room with Pellet Stove</div>
+                </div>
+                <div class="gallery-item">
+                    <img src="images/soggiorno.jpg" alt="Living area" loading="lazy">
+                    <div class="gallery-caption">Living Area</div>
+                </div>
+                <div class="gallery-item">
+                    <img src="images/cucina.jpg" alt="Equipped kitchen" loading="lazy">
+                    <div class="gallery-caption">Kitchen</div>
+                </div>
+                <div class="gallery-item">
+                    <img src="images/camera-matrimoniale.jpg" alt="Double bedroom" loading="lazy">
+                    <div class="gallery-caption">Double Bedroom</div>
+                </div>
+                <div class="gallery-item">
+                    <img src="images/camera-singoli.jpg" alt="Twin bedroom" loading="lazy">
+                    <div class="gallery-caption">Twin Bedroom</div>
+                </div>
+                <div class="gallery-item">
+                    <img src="images/bagno.jpg" alt="Bathroom" loading="lazy">
+                    <div class="gallery-caption">Bathroom</div>
+                </div>
+                <div class="gallery-item">
+                    <img src="images/giardino.jpg" alt="Private garden with mountain view" loading="lazy">
+                    <div class="gallery-caption">Garden</div>
+                </div>
+                <div class="gallery-item">
+                    <img src="images/vista-valle.jpg" alt="Breathtaking valley view" loading="lazy">
+                    <div class="gallery-caption">Valley View</div>
+                </div>
+                <div class="gallery-item">
+                    <img src="images/vista-panoramica.jpg" alt="Aosta Valley mountain panorama" loading="lazy">
+                    <div class="gallery-caption">Panoramic View</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Calendar Section -->
+    <section id="calendario" class="calendar-section">
+        <div class="container">
+            <h2 class="section-title">Check Availability</h2>
+            <p class="section-description">Select your dates and see real-time availability</p>
+            
+            <!-- Calendar UI -->
+            <div class="calendar-container">
+                <div class="calendar-header">
+                    <button class="calendar-nav" id="prevMonth">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <h3 id="currentMonth">Loading...</h3>
+                    <button class="calendar-nav" id="nextMonth">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+                
+                <div class="calendar-grid" id="calendarGrid">
+                    <!-- Calendar will be generated by JavaScript -->
+                </div>
+
+                <div class="calendar-legend">
+                    <div class="legend-item">
+                        <span class="legend-color available"></span>
+                        <span>Available</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color selected"></span>
+                        <span>Selected</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color booked"></span>
+                        <span>Booked</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color too-soon"></span>
+                        <span>Too soon (min. 5 days notice)</span>
+                    </div>
+                </div>
+
+                <!-- Selection Info -->
+                <div class="selection-info" id="selectionInfo" style="display: none;">
+                    <div class="info-row">
+                        <strong>Check-in:</strong>
+                        <span id="checkinDate">-</span>
+                    </div>
+                    <div class="info-row">
+                        <strong>Check-out:</strong>
+                        <span id="checkoutDate">-</span>
+                    </div>
+                    <div class="info-row">
+                        <strong>Nights:</strong>
+                        <span id="nightsCount">0</span>
+                    </div>
+                    <button class="btn-primary" onclick="document.getElementById('prenota').scrollIntoView({behavior: 'smooth'})">
+                        Proceed to Booking
+                    </button>
+                </div>
+            </div>
+
+            <!-- Admin Controls (Hidden by default) -->
+            <div class="admin-controls" id="adminControls" style="display: none;">
+                <h4><i class="fas fa-lock"></i> Admin Mode</h4>
+                <button class="btn-secondary" id="toggleAdminMode">Enable Admin Mode</button>
+                <div id="adminPanel" style="display: none;">
+                    <p>Select dates in the calendar to mark as booked/available</p>
+                    <button class="btn-success" id="saveBookings">Save Bookings</button>
+                    <button class="btn-warning" id="exportBookings">Export Data</button>
+                    <input type="file" id="importBookings" accept=".json" style="display: none;">
+                    <button class="btn-info" id="importBookingsBtn">Import Data</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- La Posizione Section -->
+    <section id="posizione" class="posizione">
+        <div class="container">
+            <h2 class="section-title">The Strategic Location</h2>
+            
+            <div class="posizione-content">
+                <div class="posizione-info">
+                    <h3>Donnas: Gateway to the Aosta Valley</h3>
+                    <p>
+                        At <strong>322 meters altitude</strong>, Donnas is the natural entrance to the Aosta Valley. 
+                        La Casa di Tes is located on the hill of Donnas at <strong>550 m altitude</strong>, 
+                        enjoying a <strong>mild climate all year round</strong> and spectacular views.
+                    </p>
+
+                    <div class="info-box">
+                        <i class="fas fa-thermometer-half"></i>
+                        <div>
+                            <strong>Mild Climate</strong>
+                            <p>Pleasant temperatures in all seasons thanks to the strategic position</p>
+                        </div>
+                    </div>
+
+                    <h4><i class="fas fa-map-marked-alt"></i> Key Distances</h4>
+                    <ul class="distances-list">
+                        <li>
+                            <i class="fas fa-fort-awesome"></i>
+                            <strong>Fort of Bard:</strong> just a few minutes
+                        </li>
+                        <li>
+                            <i class="fas fa-gem"></i>
+                            <strong>Chamousira Brusson Gold Mine:</strong> 28 km
+                        </li>
+                        <li>
+                            <i class="fas fa-route"></i>
+                            <strong>Via Francigena:</strong> ancient pilgrimage route
+                        </li>
+                        <li>
+                            <i class="fas fa-mountain"></i>
+                            <strong>Major ski resorts:</strong> 30-45 minutes
+                        </li>
+                    </ul>
+
+                    <div class="nearby-attraction">
+                        <h4><i class="fas fa-fort-awesome"></i> Fort of Bard - A Few Minutes Away</h4>
+                        <div class="attraction-images">
+                            <img src="images/forte-bard.jpg" alt="Fort of Bard - historic fortress Aosta Valley" loading="lazy">
+                            <img src="images/forte-bard-panorama.jpg" alt="Fort of Bard panoramic view" loading="lazy">
+                        </div>
+                        <p class="attraction-description">
+                            An imposing fortress just a few minutes from La Casa di Tes, <strong>Fort of Bard</strong> is one of the most 
+                            spectacular monuments in the Alps. It hosts museums, exhibitions and cultural events all year round.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="posizione-map">
+                    <div class="map-container">
+                        <iframe 
+                            src="https://www.google.com/maps/embed?pb=!1m17!1m12!1m3!1d2791.234567!2d7.771251!3d45.609863!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m2!1m1!2zNDXCsDM2JzM1LjUiTiA3wrA0NicxNi41IkU!5e0!3m2!1sen!2sit!4v1704801234567!5m2!1sen!2sit" 
+                            width="100%" 
+                            height="450" 
+                            style="border:0; border-radius: 15px;" 
+                            allowfullscreen="" 
+                            loading="lazy" 
+                            referrerpolicy="no-referrer-when-downgrade"
+                            title="Map La Casa di Tes - Fraz. Bondon 5, 11020 Donnas AO">
+                        </iframe>
+                        <div class="map-info">
+                            <p><i class="fas fa-map-marker-alt"></i> <strong>Fraz. Bondon, 5</strong></p>
+                            <p><i class="fas fa-city"></i> 11020 Donnas (AO)</p>
+                            <p><i class="fas fa-mountain"></i> Aosta Valley, Italy</p>
+                            <p><i class="fas fa-location-dot"></i> <strong>GPS:</strong> 45.609863, 7.771251</p>
+                            <a href="https://www.google.com/maps/dir/?api=1&destination=45.609863,7.771251" 
+                               target="_blank" 
+                               rel="noopener noreferrer" 
+                               class="btn-directions">
+                                <i class="fas fa-directions"></i> Get Directions
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Donnas Section -->
+    <section id="donnas" class="donnas">
+        <div class="container">
+            <h2 class="section-title">Donnas: A Village to Discover</h2>
+            
+            <div class="donnas-grid">
+                <!-- Heritage -->
+                <div class="donnas-card heritage">
+                    <div class="donnas-icon">
+                        <i class="fas fa-landmark"></i>
+                    </div>
+                    <h3>Unique Historical Heritage</h3>
+                    <h4>The Arch and Roman Road of Gaul</h4>
+                    <div class="donnas-images">
+                        <div class="donnas-image-grid">
+                            <img src="images/arco-romano-donnas.jpg" alt="Roman Arch of Donnas - Via delle Gallie" loading="lazy">
+                            <img src="images/strada-romana-donnas.jpg" alt="Roman road carved in rock" loading="lazy">
+                        </div>
+                    </div>
+                    <p>
+                        The magnificent <strong>Roman Arch</strong> and the ancient <strong>Via delle Gallie</strong> 
+                        (1st century BC) are extraordinary testimonies of the passage of history. A millennia-old heritage 
+                        that makes Donnas unique in the Alps.
+                    </p>
+                </div>
+
+                <!-- Wine -->
+                <div class="donnas-card wine">
+                    <div class="donnas-icon">
+                        <i class="fas fa-wine-bottle"></i>
+                    </div>
+                    <h3>Land of Wine and Heroic Viticulture</h3>
+                    <h4>Donnas DOC - The First of the Aosta Valley</h4>
+                    <div class="donnas-images">
+                        <div class="donnas-image-single">
+                            <img src="images/vigneti-donnas.jpg" alt="Donnas DOC vineyards - Heroic viticulture in Aosta Valley" loading="lazy">
+                        </div>
+                    </div>
+                    <p>
+                        Donnas is the cradle of the <strong>first DOC wine of the Aosta Valley</strong>. 
+                        The vineyards are the result of <strong>heroic viticulture</strong> handed down for generations. 
+                        Visit the <strong>Caves Coopératives de Donnas</strong> for tastings and discover the 
+                        <strong>Ecomuseum of Vine and Wine</strong>.
+                    </p>
+                    <ul class="wine-highlights">
+                        <li><i class="fas fa-glass-cheers"></i> Wine tastings at the Cooperative Cellars</li>
+                        <li><i class="fas fa-museum"></i> Ecomuseum of Vine and Wine</li>
+                        <li><i class="fas fa-cheese"></i> Ecomuseum of the Turnaria Dairy of Tréby</li>
+                    </ul>
+                </div>
+
+                <!-- Traditions -->
+                <div class="donnas-card traditions">
+                    <div class="donnas-icon">
+                        <i class="fas fa-calendar-alt"></i>
+                    </div>
+                    <h3>Living Traditions</h3>
+                    <h4>Events and Alpine Culture</h4>
+                    <p>
+                        Experience the authenticity of the Aosta Valley at the famous <strong>Sant'Orso Fair</strong> (winter), 
+                        one of the most important events in the region. Discover local crafts, taste typical products 
+                        and immerse yourself in Alpine culture.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Activities Section -->
+    <section id="attivita" class="attivita">
+        <div class="container">
+            <h2 class="section-title">Activities & Adventures</h2>
+            <p class="section-description">An adventure in every season</p>
+
+            <!-- Summer/Spring -->
+            <div class="season-section summer">
+                <h3 class="season-title">
+                    <i class="fas fa-sun"></i> Summer / Spring
+                </h3>
+                <div class="activities-grid">
+                    <div class="activity-card">
+                        <i class="fas fa-hiking"></i>
+                        <h4>Hiking</h4>
+                        <p>Trails for all levels among Mont Blanc, Matterhorn and Monte Rosa</p>
+                    </div>
+                    <div class="activity-card">
+                        <i class="fas fa-biking"></i>
+                        <h4>Mountain Bike</h4>
+                        <p>Exciting routes through woods and Alpine pastures</p>
+                    </div>
+                    <div class="activity-card">
+                        <i class="fas fa-tree"></i>
+                        <h4>Climbing Park</h4>
+                        <p>Balteo Adventure Park in Donnas for the whole family</p>
+                    </div>
+                    <div class="activity-card">
+                        <i class="fas fa-water"></i>
+                        <h4>Rafting</h4>
+                        <p>Thrilling descents on the Dora Baltea river</p>
+                    </div>
+                    <div class="activity-card">
+                        <i class="fas fa-parachute-box"></i>
+                        <h4>Paragliding</h4>
+                        <p>Admire the Alps from a unique perspective</p>
+                    </div>
+                    <div class="activity-card">
+                        <i class="fas fa-wine-glass-alt"></i>
+                        <h4>Walks among Vineyards</h4>
+                        <p>Discover heroic viticulture and local wines</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Winter -->
+            <div class="season-section winter">
+                <h3 class="season-title">
+                    <i class="fas fa-snowflake"></i> Winter
+                </h3>
+                <div class="activities-grid">
+                    <div class="activity-card">
+                        <i class="fas fa-skiing"></i>
+                        <h4>Skiing</h4>
+                        <p>Access to 19 ski resorts in the valley</p>
+                    </div>
+                    <div class="activity-card">
+                        <i class="fas fa-skating"></i>
+                        <h4>Cross-country Skiing</h4>
+                        <p>Over 80 km of groomed trails</p>
+                    </div>
+                    <div class="activity-card">
+                        <i class="fas fa-boot"></i>
+                        <h4>Snowshoeing</h4>
+                        <p>Magic walks in the snow among the peaks</p>
+                    </div>
+                    <div class="activity-card">
+                        <i class="fas fa-mountain"></i>
+                        <h4>Ski Mountaineering</h4>
+                        <p>For experts: unforgettable itineraries</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Culture -->
+            <div class="season-section culture">
+                <h3 class="season-title">
+                    <i class="fas fa-landmark"></i> Culture & History
+                </h3>
+                <div class="activities-grid">
+                    <div class="activity-card">
+                        <i class="fas fa-chess-rook"></i>
+                        <h4>Castles</h4>
+                        <p>Fénis, Issogne, Verrès, Savoy Castle</p>
+                    </div>
+                    <div class="activity-card">
+                        <i class="fas fa-fort-awesome"></i>
+                        <h4>Fort of Bard</h4>
+                        <p>Majestic fortress with museum and exhibitions</p>
+                    </div>
+                    <div class="activity-card">
+                        <i class="fas fa-route"></i>
+                        <h4>Via Francigena</h4>
+                        <p>Ancient pilgrimage route through history</p>
+                    </div>
+                    <div class="activity-card">
+                        <i class="fas fa-church"></i>
+                        <h4>Roman Heritage</h4>
+                        <p>Roman Arch and ancient road of Donnas</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Castelli Valdostani Section -->
+    <section id="castelli" class="castelli-valdostani">
+        <div class="container">
+            <h2 class="section-title">The Castles of Aosta Valley</h2>
+            <p class="section-subtitle">A journey through medieval towers, fortresses and royal residences in the heart of the Alps</p>
+            
+            <div class="castelli-intro">
+                <p>The Aosta Valley is home to over 70 castles and fortifications, testimony to a glorious past. 
+                Each manor tells stories of knights, noble families and epic battles, set in breathtaking Alpine landscapes.</p>
+            </div>
+
+            <div class="castelli-gallery">
+                <div class="castello-card">
+                    <div class="castello-image">
+                        <img src="images/castello-fenis-medieval.jpg" alt="Fénis Castle - Aosta Valley" loading="lazy">
+                    </div>
+                    <div class="castello-info">
+                        <h3><i class="fas fa-chess-rook"></i> Fénis Castle</h3>
+                        <p>The most famous castle in the Aosta Valley, with its battlemented towers and fifteenth-century frescoes. A masterpiece of perfectly preserved medieval architecture.</p>
+                    </div>
+                </div>
+
+                <div class="castello-card featured">
+                    <div class="castello-image">
+                        <img src="images/castel-savoia-1.jpg" alt="Savoy Castle - Gressoney-Saint-Jean" loading="lazy">
+                    </div>
+                    <div class="castello-info">
+                        <h3><i class="fas fa-crown"></i> Savoy Castle - Gressoney</h3>
+                        <p>The summer residence of Queen Margherita of Savoy, a jewel in eclectic style surrounded by the peaks of Monte Rosa. A fairytale castle in the heart of the Alps.</p>
+                    </div>
+                </div>
+
+                <div class="castello-card featured">
+                    <div class="castello-image">
+                        <img src="images/castel-savoia-mountains.jpg" alt="Savoy Castle with Monte Rosa" loading="lazy">
+                    </div>
+                    <div class="castello-info">
+                        <h3><i class="fas fa-mountain"></i> Savoy Castle Panoramic</h3>
+                        <p>Panoramic view of Savoy Castle surrounded by Alpine nature. Its five towers stand out against the sky of the mountains of the Aosta Valley.</p>
+                    </div>
+                </div>
+
+                <div class="castello-card">
+                    <div class="castello-image">
+                        <img src="images/castello-issogne-courtyard.jpg" alt="Issogne Castle - Inner courtyard" loading="lazy">
+                    </div>
+                    <div class="castello-info">
+                        <h3><i class="fas fa-landmark"></i> Issogne Castle</h3>
+                        <p>Elegant Renaissance residence with the famous porticoed courtyard and the "Fountain of the Pomegranate". A dive into court life in the fifteenth century.</p>
+                    </div>
+                </div>
+
+                <div class="castello-card">
+                    <div class="castello-image">
+                        <img src="images/castello-verres.jpg" alt="Verrès Castle" loading="lazy">
+                    </div>
+                    <div class="castello-info">
+                        <h3><i class="fas fa-fort-awesome"></i> Verrès Castle</h3>
+                        <p>Imposing military fortress with a square plan, unique example of fourteenth-century monoblock architecture. Majestically dominates the valley below.</p>
+                    </div>
+                </div>
+
+                <div class="castello-card">
+                    <div class="castello-image">
+                        <img src="images/forte-bard.jpg" alt="Fort of Bard" loading="lazy">
+                    </div>
+                    <div class="castello-info">
+                        <h3><i class="fas fa-shield-alt"></i> Fort of Bard</h3>
+                        <p>Spectacular nineteenth-century military fortress that resisted Napoleon's siege. Today it houses museums and modern art exhibitions.</p>
+                    </div>
+                </div>
+
+                <div class="castello-card">
+                    <div class="castello-image">
+                        <img src="images/castello-sarriod-tower.jpg" alt="Sarriod de la Tour Castle" loading="lazy">
+                    </div>
+                    <div class="castello-info">
+                        <h3><i class="fas fa-tower-observation"></i> Sarriod de la Tour Castle</h3>
+                        <p>Elegant medieval castle in Saint-Pierre, famous for the "Room of Heads" with 171 carved corbels. A treasure of Aosta Valley medieval art.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="castelli-cta">
+                <p><i class="fas fa-ticket-alt"></i> <strong>Visit the castles of the Aosta Valley during your stay at La Casa di Tes!</strong></p>
+                <p>Many castles can be reached in 20-60 minutes by car from Donnas.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Soggiorno Ideale Section -->
+    <section class="soggiorno-ideale">
+        <div class="container">
+            <h2 class="section-title">Your Ideal Stay</h2>
+            <p class="section-description">La Casa di Tes is perfect for every type of vacation</p>
+
+            <div class="soggiorno-grid">
+                <div class="soggiorno-card romantic">
+                    <div class="soggiorno-icon">
+                        <i class="fas fa-heart"></i>
+                    </div>
+                    <h3>Romantic Getaway</h3>
+                    <p>Intimate atmosphere, mountain views, private garden and fireplace. The perfect setting for couples.</p>
+                </div>
+
+                <div class="soggiorno-card active">
+                    <div class="soggiorno-icon">
+                        <i class="fas fa-running"></i>
+                    </div>
+                    <h3>Active Vacation</h3>
+                    <p>Starting point for hiking, skiing, climbing and all outdoor activities in the Alps.</p>
+                </div>
+
+                <div class="soggiorno-card wine">
+                    <div class="soggiorno-icon">
+                        <i class="fas fa-wine-glass"></i>
+                    </div>
+                    <h3>Food & Wine Tourism</h3>
+                    <p>Discover Donnas DOC wine, typical products and Alpine culinary traditions.</p>
+                </div>
+
+                <div class="soggiorno-card family">
+                    <div class="soggiorno-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h3>Family</h3>
+                    <p>Spacious, safe, with private garden and parking. Ideal for families with children.</p>
+                </div>
+            </div>
+            
+            <div class="stay-description">
+                <p>
+                    Wake up with mountain views, have breakfast with local products, explore medieval villages 
+                    and Roman sites, taste fine wines, walk through terraced vineyards, and return 
+                    in the evening to the comfort of your apartment with garden, where you can relax while planning 
+                    the adventures of the next day.
+                </p>
+                <p class="highlight">
+                    <strong>Donnas is not just a place to sleep: it's an authentic Aosta Valley experience</strong>, 
+                    where thousand-year history, majestic nature and living traditions intertwine to give you unforgettable memories.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section id="prezzi" class="prezzi">
+        <div class="container">
+            <h2 class="section-title">Rates & Pricing</h2>
+            <p class="section-subtitle">Transparent rates for your stay in Aosta Valley</p>
+            
+            <div class="pricing-grid">
+                <div class="pricing-card">
+                    <div class="pricing-icon">
+                        <i class="fas fa-user-friends"></i>
+                    </div>
+                    <h3>2 People</h3>
+                    <div class="pricing-amount">
+                        <span class="price">€90</span>
+                        <span class="period">per night</span>
+                    </div>
+                    <ul class="pricing-features">
+                        <li><i class="fas fa-check"></i> Romantic couple</li>
+                        <li><i class="fas fa-check"></i> All amenities included</li>
+                        <li><i class="fas fa-check"></i> Free WiFi</li>
+                        <li><i class="fas fa-check"></i> Private parking</li>
+                    </ul>
+                </div>
+
+                <div class="pricing-card featured">
+                    <div class="pricing-badge">Most Popular</div>
+                    <div class="pricing-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h3>3 People</h3>
+                    <div class="pricing-amount">
+                        <span class="price">€120</span>
+                        <span class="period">per night</span>
+                    </div>
+                    <ul class="pricing-features">
+                        <li><i class="fas fa-check"></i> Perfect for small groups</li>
+                        <li><i class="fas fa-check"></i> All amenities included</li>
+                        <li><i class="fas fa-check"></i> Free WiFi</li>
+                        <li><i class="fas fa-check"></i> Private parking</li>
+                        <li><i class="fas fa-check"></i> Extra space</li>
+                    </ul>
+                </div>
+
+                <div class="pricing-card">
+                    <div class="pricing-icon">
+                        <i class="fas fa-home"></i>
+                    </div>
+                    <h3>4 People</h3>
+                    <div class="pricing-amount">
+                        <span class="price">€140</span>
+                        <span class="period">per night</span>
+                    </div>
+                    <ul class="pricing-features">
+                        <li><i class="fas fa-check"></i> Perfect for families</li>
+                        <li><i class="fas fa-check"></i> All amenities included</li>
+                        <li><i class="fas fa-check"></i> Free WiFi</li>
+                        <li><i class="fas fa-check"></i> Private parking</li>
+                        <li><i class="fas fa-check"></i> Maximum comfort</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="pricing-notes">
+                <div class="pricing-note">
+                    <i class="fas fa-info-circle"></i>
+                    <p><strong>Minimum stay:</strong> 3 nights</p>
+                </div>
+                <div class="pricing-note">
+                    <i class="fas fa-calendar-check"></i>
+                    <p><strong>Check-in:</strong> from 3:00 PM | <strong>Check-out:</strong> by 10:00 AM</p>
+                </div>
+                <div class="pricing-note">
+                    <i class="fas fa-star"></i>
+                    <p><strong>Final cleaning:</strong> Included in the price</p>
+                </div>
+                <div class="pricing-note">
+                    <i class="fas fa-shield-alt"></i>
+                    <p><strong>Deposit:</strong> No deposit required</p>
+                </div>
+            </div>
+
+            <div class="pricing-cta">
+                <p>Ready to book your stay in Aosta Valley?</p>
+                <a href="#prenota" class="btn-pricing">Book Now</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Booking Section -->
+    <section id="prenota" class="prenota">
+        <div class="container">
+            <h2 class="section-title">Book Your Stay Now</h2>
+            <p class="section-description">Fill out the form and we will contact you soon</p>
+
+            <div class="booking-info-box">
+                <div class="info-item">
+                    <i class="fas fa-clock"></i>
+                    <div>
+                        <strong>Flexible Check-in</strong>
+                        <p>We adapt to your needs</p>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <i class="fas fa-hand-holding-heart"></i>
+                    <div>
+                        <strong>Everything Included</strong>
+                        <p>Linen, WiFi, parking included</p>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <i class="fas fa-info-circle"></i>
+                    <div>
+                        <strong>Personalized Advice</strong>
+                        <p>We will recommend the best activities</p>
+                    </div>
+                </div>
+            </div>
+
+            <form id="bookingForm" class="booking-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="name"><i class="fas fa-user"></i> Full Name *</label>
+                        <input type="text" id="name" name="name" required placeholder="Your name and surname">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email"><i class="fas fa-envelope"></i> Email *</label>
+                        <input type="email" id="email" name="email" required placeholder="your.email@example.com">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="guests"><i class="fas fa-users"></i> Number of Guests *</label>
+                        <select id="guests" name="guests" required>
+                            <option value="">Select...</option>
+                            <option value="1">1 guest</option>
+                            <option value="2">2 guests</option>
+                            <option value="3">3 guests</option>
+                            <option value="4">4 guests</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="checkin"><i class="fas fa-calendar-check"></i> Check-in *</label>
+                        <input type="date" id="checkin" name="checkin" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="checkout"><i class="fas fa-calendar-times"></i> Check-out *</label>
+                        <input type="date" id="checkout" name="checkout" required>
+                        <small class="form-help">Minimum 5 days notice required</small>
+                    </div>
+                </div>
+
+                <div class="form-group full-width">
+                    <label for="message"><i class="fas fa-comment"></i> Message</label>
+                    <textarea id="message" name="message" rows="5" placeholder="Tell us about your needs, special requests or questions..."></textarea>
+                </div>
+
+                <button type="submit" class="btn-submit">
+                    <i class="fas fa-paper-plane"></i> Send Booking Request
+                </button>
+
+                <div id="formMessage" class="form-message" style="display: none;"></div>
+            </form>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4><i class="fas fa-mountain"></i> La Casa di Tes</h4>
+                    <p>Your refuge in the Aosta Valley</p>
+                    <p><i class="fas fa-map-marker-alt"></i> Donnas, Aosta Valley</p>
+                    <p><i class="fas fa-envelope"></i> info@lacasadites.com</p>
+                </div>
+
+                <div class="footer-section">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="#appartamento">The Apartment</a></li>
+                        <li><a href="#posizione">Location</a></li>
+                        <li><a href="#attivita">Activities</a></li>
+                        <li><a href="#castelli">Castles</a></li>
+                        <li><a href="#prezzi">Rates</a></li>
+                        <li><a href="#prenota">Book Now</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-section">
+                    <h4>Information</h4>
+                    <ul>
+                        <li><i class="fas fa-clock"></i> Flexible check-in</li>
+                        <li><i class="fas fa-wifi"></i> Free WiFi</li>
+                        <li><i class="fas fa-car"></i> Free parking</li>
+                        <li><i class="fas fa-leaf"></i> Private garden</li>
+                    </ul>
+                </div>
+
+                <div class="footer-section">
+                    <h4>Follow Us</h4>
+                    <div class="social-links">
+                        <a href="#" title="Facebook"><i class="fab fa-facebook"></i></a>
+                        <a href="#" title="Instagram"><i class="fab fa-instagram"></i></a>
+                        <a href="#" title="TripAdvisor"><i class="fab fa-tripadvisor"></i></a>
+                    </div>
+                    <div style="margin-top: 20px;">
+                        <a href="index.html" class="language-switch" style="color: var(--lilac-primary); text-decoration: none;">
+                            <i class="fas fa-globe"></i> Switch to Italian
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <p>&copy; 2026 La Casa di Tes - All Rights Reserved</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scroll to Top Button -->
+    <button id="scrollTopBtn" class="scroll-top-btn" title="Back to top">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+
+    <!-- JavaScript -->
+    <script src="js/main.js"></script>
+    <script src="js/calendar-en.js"></script>
+</body>
+</html>
