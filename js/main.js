@@ -229,7 +229,7 @@ if (contactForm) {
             nome: document.getElementById('nome').value,
             cognome: document.getElementById('cognome').value,
             email: document.getElementById('email').value,
-            telefono: document.getElementById('telefono').value,
+            telefono: document.getElementById('telefono') ? document.getElementById('telefono').value : '',
             checkin: document.getElementById('checkin').value,
             checkout: document.getElementById('checkout').value,
             ospiti: document.getElementById('ospiti').value,
@@ -263,15 +263,34 @@ if (contactForm) {
             return;
         }
         
-        showMessage(
-            `Grazie ${formData.nome}! La tua richiesta di prenotazione per ${nights} ${nights === 1 ? 'notte' : 'notti'} 
-            (dal ${formatDate(formData.checkin)} al ${formatDate(formData.checkout)}) per ${formData.ospiti} 
-            ${formData.ospiti === '1' ? 'ospite' : 'ospiti'} è stata inviata con successo. 
-            Ti contatteremo presto all'indirizzo ${formData.email}.`,
-            'success'
-        );
-        
-        contactForm.reset();
+        // Se tutte le validazioni passano, invia il form reale
+        try {
+            const formElement = document.getElementById('contactForm');
+            const formDataToSend = new FormData(formElement);
+            
+            const response = await fetch('/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams(formDataToSend).toString()
+            });
+            
+            if (response.ok) {
+                showMessage(
+                    `Grazie ${formData.nome}! La tua richiesta di prenotazione per ${nights} ${nights === 1 ? 'notte' : 'notti'} 
+                    (dal ${formatDate(formData.checkin)} al ${formatDate(formData.checkout)}) per ${formData.ospiti} 
+                    ${formData.ospiti === '1' ? 'ospite' : 'ospiti'} è stata inviata con successo. 
+                    Riceverai una conferma via email all'indirizzo ${formData.email}.`,
+                    'success'
+                );
+                
+                contactForm.reset();
+            } else {
+                throw new Error('Errore nell\'invio del form');
+            }
+        } catch (error) {
+            showMessage('Si è verificato un errore durante l\'invio. Per favore riprova o contattaci direttamente.', 'error');
+            console.error('Errore invio form:', error);
+        }
         
         console.log('Prenotazione ricevuta:', formData);
         console.log(`Numero di notti: ${nights}`);
