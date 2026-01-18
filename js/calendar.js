@@ -1,413 +1,464 @@
-// Calendar functionality for La Casa di Tes booking system
-// Minimum 5 days advance notice + Minimum 5 nights stay required
+// ===================================
+// Calendar System - La Casa di Tes
+// ===================================
 
-(function() {
-    'use strict';
+// ⚙️ CONFIGURAZIONE SOGGIORNO MINIMO
+// ====================================
+// Modifica questo valore per cambiare il soggiorno minimo richiesto
+// Esempi: 
+//   MINIMUM_NIGHTS = 2  → soggiorno minimo 2 notti
+//   MINIMUM_NIGHTS = 3  → soggiorno minimo 3 notti
+//   MINIMUM_NIGHTS = 5  → soggiorno minimo 5 notti (settimana corta)
+//   MINIMUM_NIGHTS = 7  → soggiorno minimo 7 notti (settimana intera)
+const MINIMUM_NIGHTS = 5; // 🔧 MODIFICA QUESTO NUMERO PER CAMBIARE IL MINIMO
 
-    // Calendar state
-    let currentDate = new Date();
-    let currentYear = currentDate.getFullYear();
-    let currentMonth = currentDate.getMonth();
-    let selectedCheckIn = null;
-    let selectedCheckOut = null;
-    let isAdminMode = false;
-    let occupiedDates = [];
+// ⚙️ CONFIGURAZIONE PREAVVISO MINIMO
+// ====================================
+// Modifica questo valore per cambiare i giorni di preavviso richiesti
+// Esempi:
+//   ADVANCE_NOTICE_DAYS = 0  → prenotazioni istantanee (anche per oggi)
+//   ADVANCE_NOTICE_DAYS = 1  → prenotazioni da domani
+//   ADVANCE_NOTICE_DAYS = 3  → preavviso di 3 giorni
+//   ADVANCE_NOTICE_DAYS = 5  → preavviso di 5 giorni (ATTUALE)
+//   ADVANCE_NOTICE_DAYS = 7  → preavviso di 1 settimana
+const ADVANCE_NOTICE_DAYS = 5; // 🔧 MODIFICA QUESTO NUMERO PER CAMBIARE IL PREAVVISO
 
-    // MINIMUM NIGHTS REQUIRED
-    const MIN_NIGHTS = 5;
-    const MIN_ADVANCE_DAYS = 5;
+class BookingCalendar {
+    constructor() {
+        this.currentDate = new Date();
+        this.selectedStartDate = null;
+        this.selectedEndDate = null;
+        this.occupiedDates = this.loadOccupiedDates();
+        this.adminMode = false;
+        this.minimumNights = MINIMUM_NIGHTS; // Usa la costante configurabile
+        this.advanceNoticeDays = ADVANCE_NOTICE_DAYS; // Usa la costante configurabile
+        this.init();
+    }
+
+    init() {
+        this.renderCalendar();
+        this.setupEventListeners();
+        this.updateBookingInfo();
+    }
 
     // Load occupied dates from localStorage
-    function loadOccupiedDates() {
-        const saved = localStorage.getItem('lacasadites_occupied_dates');
+    loadOccupiedDates() {
+        const saved = localStorage.getItem('casadiTesOccupiedDates');
         if (saved) {
-            try {
-                occupiedDates = JSON.parse(saved);
-            } catch (e) {
-                occupiedDates = [];
-            }
+            return new Set(JSON.parse(saved));
         }
+        // Default occupied dates (esempio)
+        return new Set([
+            '2026-01-15',
+            '2026-01-16',
+            '2026-01-17',
+            '2026-02-14',
+            '2026-02-15',
+        ]);
     }
 
     // Save occupied dates to localStorage
-    function saveOccupiedDates() {
-        localStorage.setItem('lacasadites_occupied_dates', JSON.stringify(occupiedDates));
+    saveOccupiedDates() {
+        localStorage.setItem('casadiTesOccupiedDates', 
+            JSON.stringify([...this.occupiedDates]));
+        this.showNotification('✅ Disponibilità salvata!', 'success');
     }
 
-    // Check if date is occupied
-    function isDateOccupied(dateStr) {
-        return occupiedDates.includes(dateStr);
-    }
-
-    // Toggle date occupation (admin only)
-    function toggleDateOccupation(dateStr) {
-        if (!isAdminMode) return;
+    // Render calendar
+    renderCalendar() {
+        const year = this.currentDate.getFullYear();
+        const month = this.currentDate.getMonth();
         
-        const index = occupiedDates.indexOf(dateStr);
-        if (index > -1) {
-            occupiedDates.splice(index, 1);
-        } else {
-            occupiedDates.push(dateStr);
-        }
-        saveOccupiedDates();
-    }
+        // Update month/year display
+        const monthNames = [
+            'Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno',
+            'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'
+        ];
+        document.getElementById('calendarMonthYear').textContent = 
+            `${monthNames[month]} ${year}`;
 
-    // Check if date is too soon (less than 5 days notice)
-    function isTooSoon(date) {
+        // Get first day of month and number of days
+        const firstDay = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        
+        // Adjust firstDay (Monday = 0, Sunday = 6)
+        const adjustedFirstDay = firstDay === 0 ? 6 : firstDay - 1;
+
+        // Render days
+        const daysContainer = document.getElementById('calendarDays');
+        daysContainer.innerHTML = '';
+
+        // Empty cells before first day
+        for (let i = 0; i < adjustedFirstDay; i++) {
+            const emptyDay = document.createElement('div');
+            emptyDay.className = 'calendar-day empty';
+            daysContainer.appendChild(emptyDay);
+        }
+
+        // Actual days
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        const minDate = new Date(today);
-        minDate.setDate(minDate.getDate() + MIN_ADVANCE_DAYS);
         
-        return date < minDate;
+        // Calculate minimum bookable date (today + 5 days)
+        const minBookableDate = new Date(today);
+        minBookableDate.setDate(minBookableDate.getDate() + 5);
+        minBookableDate.setHours(0, 0, 0, 0);
+
+        for (let day = 1; day <= daysInMonth; day++) {
+            const dayElement = document.createElement('div');
+            dayElement.className = 'calendar-day';
+            dayElement.textContent = day;
+            
+            const currentDayDate = new Date(year, month, day);
+            currentDayDate.setHours(0, 0, 0, 0);
+            const dateString = this.formatDate(currentDayDate);
+
+            // Check if past date or within 5-day notice period
+            if (currentDayDate < minBookableDate) {
+                dayElement.classList.add('occupied');
+                dayElement.style.opacity = '0.4';
+                dayElement.style.cursor = 'not-allowed';
+                if (currentDayDate >= today && currentDayDate < minBookableDate) {
+                    // Add a special indicator for "too soon" dates
+                    dayElement.title = 'Richiesto preavviso di 5 giorni';
+                }
+            } else {
+                // Check if occupied
+                if (this.occupiedDates.has(dateString)) {
+                    dayElement.classList.add('occupied');
+                } else {
+                    dayElement.classList.add('available');
+                }
+
+                // Check if today
+                if (currentDayDate.getTime() === today.getTime()) {
+                    dayElement.classList.add('today');
+                }
+
+                // Check if in selected range
+                if (this.selectedStartDate && this.selectedEndDate) {
+                    const start = new Date(this.selectedStartDate);
+                    const end = new Date(this.selectedEndDate);
+                    
+                    if (currentDayDate.getTime() === start.getTime()) {
+                        dayElement.classList.add('selected-start');
+                    } else if (currentDayDate.getTime() === end.getTime()) {
+                        dayElement.classList.add('selected-end');
+                    } else if (currentDayDate > start && currentDayDate < end) {
+                        dayElement.classList.add('in-range');
+                    }
+                }
+
+                // Add click event
+                dayElement.addEventListener('click', () => {
+                    this.handleDayClick(currentDayDate, dateString);
+                });
+            }
+
+            daysContainer.appendChild(dayElement);
+        }
     }
 
-    // Format date as YYYY-MM-DD
-    function formatDate(date) {
+    // Handle day click
+    handleDayClick(date, dateString) {
+        if (this.adminMode) {
+            // Admin mode: toggle availability
+            if (this.occupiedDates.has(dateString)) {
+                this.occupiedDates.delete(dateString);
+            } else {
+                this.occupiedDates.add(dateString);
+            }
+            this.renderCalendar();
+        } else {
+            // Guest mode: select booking range
+            
+            // Check if date is within 5-day notice period
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const minBookableDate = new Date(today);
+            minBookableDate.setDate(minBookableDate.getDate() + 5);
+            minBookableDate.setHours(0, 0, 0, 0);
+            
+            if (date < minBookableDate) {
+                const daysUntil = Math.ceil((date - today) / (1000 * 60 * 60 * 24));
+                if (daysUntil < 5 && daysUntil >= 0) {
+                    this.showNotification(`⏰ Richiesto preavviso di 5 giorni. Questa data è troppo vicina (${daysUntil} giorni)`, 'error');
+                } else {
+                    this.showNotification('❌ Data nel passato', 'error');
+                }
+                return;
+            }
+            
+            const isOccupied = this.occupiedDates.has(dateString);
+            
+            if (isOccupied) {
+                this.showNotification('❌ Questa data non è disponibile', 'error');
+                return;
+            }
+
+            if (!this.selectedStartDate || (this.selectedStartDate && this.selectedEndDate)) {
+                // Start new selection
+                this.selectedStartDate = date;
+                this.selectedEndDate = null;
+            } else if (date < this.selectedStartDate) {
+                // Selected date is before start, swap
+                this.selectedEndDate = this.selectedStartDate;
+                this.selectedStartDate = date;
+                
+                // Validate minimum nights
+                const nights = Math.ceil((this.selectedEndDate - this.selectedStartDate) / (1000 * 60 * 60 * 24));
+                if (nights < this.minimumNights) {
+                    this.showNotification(`⚠️ Soggiorno minimo richiesto: ${this.minimumNights} notti. Hai selezionato ${nights} notte/i.`, 'error');
+                    this.selectedStartDate = null;
+                    this.selectedEndDate = null;
+                    this.renderCalendar();
+                    this.updateBookingInfo();
+                    return;
+                }
+            } else {
+                // Set end date
+                this.selectedEndDate = date;
+                
+                // Validate minimum nights
+                const nights = Math.ceil((this.selectedEndDate - this.selectedStartDate) / (1000 * 60 * 60 * 24));
+                if (nights < this.minimumNights) {
+                    this.showNotification(`⚠️ Soggiorno minimo richiesto: ${this.minimumNights} notti. Hai selezionato ${nights} notte/i.`, 'error');
+                    this.selectedStartDate = null;
+                    this.selectedEndDate = null;
+                    this.renderCalendar();
+                    this.updateBookingInfo();
+                    return;
+                }
+                
+                // Check if any occupied dates in range
+                if (this.hasOccupiedInRange(this.selectedStartDate, this.selectedEndDate)) {
+                    this.showNotification('❌ Ci sono date occupate nel periodo selezionato', 'error');
+                    this.selectedStartDate = null;
+                    this.selectedEndDate = null;
+                }
+            }
+            
+            this.renderCalendar();
+            this.updateBookingInfo();
+        }
+    }
+
+    // Check if there are occupied dates in range
+    hasOccupiedInRange(start, end) {
+        const current = new Date(start);
+        current.setDate(current.getDate() + 1); // Skip start date
+        
+        while (current < end) {
+            const dateString = this.formatDate(current);
+            if (this.occupiedDates.has(dateString)) {
+                return true;
+            }
+            current.setDate(current.getDate() + 1);
+        }
+        return false;
+    }
+
+    // Update booking info box
+    updateBookingInfo() {
+        const infoBox = document.getElementById('bookingInfoBox');
+        
+        if (this.selectedStartDate && this.selectedEndDate) {
+            const nights = Math.ceil((this.selectedEndDate - this.selectedStartDate) / (1000 * 60 * 60 * 24));
+            
+            document.getElementById('checkInDate').textContent = 
+                this.formatDateDisplay(this.selectedStartDate);
+            document.getElementById('checkOutDate').textContent = 
+                this.formatDateDisplay(this.selectedEndDate);
+            document.getElementById('nightsCount').textContent = nights;
+            
+            infoBox.style.display = 'block';
+        } else {
+            infoBox.style.display = 'none';
+        }
+    }
+
+    // Setup event listeners
+    setupEventListeners() {
+        // Previous month
+        document.getElementById('prevMonth').addEventListener('click', () => {
+            this.currentDate.setMonth(this.currentDate.getMonth() - 1);
+            this.renderCalendar();
+        });
+
+        // Next month
+        document.getElementById('nextMonth').addEventListener('click', () => {
+            this.currentDate.setMonth(this.currentDate.getMonth() + 1);
+            this.renderCalendar();
+        });
+
+        // Reset selection
+        document.getElementById('resetDates').addEventListener('click', () => {
+            this.selectedStartDate = null;
+            this.selectedEndDate = null;
+            this.renderCalendar();
+            this.updateBookingInfo();
+        });
+
+        // Book now
+        document.getElementById('bookNow').addEventListener('click', () => {
+            if (this.selectedStartDate && this.selectedEndDate) {
+                // Scroll to booking form
+                const bookingForm = document.getElementById('prenota');
+                bookingForm.scrollIntoView({ behavior: 'smooth' });
+                
+                // Pre-fill dates in form
+                const checkinInput = document.getElementById('checkin');
+                const checkoutInput = document.getElementById('checkout');
+                
+                if (checkinInput && checkoutInput) {
+                    checkinInput.value = this.formatDate(this.selectedStartDate);
+                    checkoutInput.value = this.formatDate(this.selectedEndDate);
+                }
+                
+                this.showNotification('✅ Date selezionate! Compila il form sotto', 'success');
+            }
+        });
+
+        // Admin mode toggle
+        document.getElementById('toggleAdminMode').addEventListener('click', () => {
+            this.adminMode = !this.adminMode;
+            const indicator = document.getElementById('adminModeIndicator');
+            const adminPanel = document.querySelector('.admin-panel');
+            
+            if (this.adminMode) {
+                indicator.textContent = '🔧 MODALITÀ ADMIN ATTIVA';
+                indicator.style.background = '#FFE69C';
+                adminPanel.style.border = '3px solid #FF9800';
+                this.showNotification('🔧 Modalità Admin: Clicca sui giorni per modificare disponibilità', 'info');
+            } else {
+                indicator.textContent = '👤 Modalità Ospite';
+                indicator.style.background = '#E0E0E0';
+                adminPanel.style.border = '3px dashed var(--primary-color)';
+            }
+            
+            this.selectedStartDate = null;
+            this.selectedEndDate = null;
+            this.renderCalendar();
+            this.updateBookingInfo();
+        });
+
+        // Save availability
+        document.getElementById('saveAvailability').addEventListener('click', () => {
+            this.saveOccupiedDates();
+        });
+
+        // Clear all occupied dates
+        document.getElementById('clearOccupied').addEventListener('click', () => {
+            if (confirm('Sei sicuro di voler liberare TUTTE le date?')) {
+                this.occupiedDates.clear();
+                this.saveOccupiedDates();
+                this.renderCalendar();
+            }
+        });
+
+        // Export calendar
+        document.getElementById('exportCalendar').addEventListener('click', () => {
+            this.exportCalendar();
+        });
+    }
+
+    // Export calendar to JSON
+    exportCalendar() {
+        const data = {
+            occupiedDates: [...this.occupiedDates],
+            exportDate: new Date().toISOString(),
+            property: 'La Casa di Tes - Donnas'
+        };
+        
+        const dataStr = JSON.stringify(data, null, 2);
+        const dataBlob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(dataBlob);
+        
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `calendario-casa-tes-${new Date().toISOString().split('T')[0]}.json`;
+        link.click();
+        
+        URL.revokeObjectURL(url);
+        this.showNotification('📥 Calendario esportato!', 'success');
+    }
+
+    // Show notification
+    showNotification(message, type) {
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        notification.textContent = message;
+        notification.style.cssText = `
+            position: fixed;
+            top: 100px;
+            right: 20px;
+            padding: 15px 25px;
+            background: ${type === 'success' ? '#4CAF50' : type === 'error' ? '#F44336' : '#2196F3'};
+            color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            z-index: 10000;
+            font-weight: 600;
+            animation: slideIn 0.3s ease;
+        `;
+        
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.style.animation = 'slideOut 0.3s ease';
+            setTimeout(() => notification.remove(), 300);
+        }, 3000);
+    }
+
+    // Format date to YYYY-MM-DD
+    formatDate(date) {
         const year = date.getFullYear();
         const month = String(date.getMonth() + 1).padStart(2, '0');
         const day = String(date.getDate()).padStart(2, '0');
         return `${year}-${month}-${day}`;
     }
 
-    // Format date for display (DD/MM/YYYY)
-    function formatDisplayDate(date) {
-        const day = String(date.getDate()).padStart(2, '0');
-        const month = String(date.getMonth() + 1).padStart(2, '0');
+    // Format date for display
+    formatDateDisplay(date) {
+        const day = date.getDate();
+        const month = date.getMonth() + 1;
         const year = date.getFullYear();
         return `${day}/${month}/${year}`;
     }
+}
 
-    // Get month name
-    function getMonthName(month) {
-        const monthNames = [
-            'Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno',
-            'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'
-        ];
-        return monthNames[month];
+// Initialize calendar when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+    // Only initialize if calendar section exists
+    if (document.getElementById('calendarDays')) {
+        window.bookingCalendar = new BookingCalendar();
+        console.log('📅 Calendario prenotazioni inizializzato');
     }
+});
 
-    // Calculate nights between two dates
-    function calculateNights(checkIn, checkOut) {
-        const oneDay = 24 * 60 * 60 * 1000;
-        return Math.round((checkOut - checkIn) / oneDay);
-    }
-
-    // Render calendar
-    function renderCalendar() {
-        const calendarDays = document.getElementById('calendarDays');
-        const calendarMonthYear = document.getElementById('calendarMonthYear');
-        
-        if (!calendarDays || !calendarMonthYear) return;
-
-        // Update month/year display
-        calendarMonthYear.textContent = `${getMonthName(currentMonth)} ${currentYear}`;
-
-        // Clear calendar
-        calendarDays.innerHTML = '';
-
-        // Get first day of month (0 = Sunday, 1 = Monday, etc.)
-        const firstDay = new Date(currentYear, currentMonth, 1);
-        let startingDayOfWeek = firstDay.getDay();
-        // Adjust so Monday is 0
-        startingDayOfWeek = startingDayOfWeek === 0 ? 6 : startingDayOfWeek - 1;
-
-        // Get number of days in month
-        const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-
-        // Add empty cells for days before month starts
-        for (let i = 0; i < startingDayOfWeek; i++) {
-            const emptyDay = document.createElement('div');
-            emptyDay.className = 'calendar-day empty';
-            calendarDays.appendChild(emptyDay);
+// Add animations
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideIn {
+        from {
+            transform: translateX(400px);
+            opacity: 0;
         }
-
-        // Add days of month
-        for (let day = 1; day <= daysInMonth; day++) {
-            const date = new Date(currentYear, currentMonth, day);
-            const dateStr = formatDate(date);
-            const dayElement = document.createElement('div');
-            dayElement.className = 'calendar-day';
-            dayElement.textContent = day;
-            dayElement.dataset.date = dateStr;
-
-            // Check if date is in the past
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            if (date < today) {
-                dayElement.classList.add('past');
-            }
-            // Check if date is too soon (less than 5 days)
-            else if (isTooSoon(date) && !isAdminMode) {
-                dayElement.classList.add('unavailable');
-                dayElement.title = 'Preavviso minimo 5 giorni';
-            }
-            // Check if date is occupied
-            else if (isDateOccupied(dateStr)) {
-                dayElement.classList.add('occupied');
-                if (!isAdminMode) {
-                    dayElement.title = 'Data occupata';
-                }
-            }
-            // Available date
-            else {
-                dayElement.classList.add('available');
-            }
-
-            // Check if date is selected
-            if (selectedCheckIn && dateStr === formatDate(selectedCheckIn)) {
-                dayElement.classList.add('selected-checkin');
-            }
-            if (selectedCheckOut && dateStr === formatDate(selectedCheckOut)) {
-                dayElement.classList.add('selected-checkout');
-            }
-
-            // Highlight dates between check-in and check-out
-            if (selectedCheckIn && selectedCheckOut) {
-                if (date > selectedCheckIn && date < selectedCheckOut) {
-                    dayElement.classList.add('in-range');
-                }
-            }
-
-            // Add click handler
-            dayElement.addEventListener('click', function() {
-                handleDayClick(date, dateStr);
-            });
-
-            calendarDays.appendChild(dayElement);
+        to {
+            transform: translateX(0);
+            opacity: 1;
         }
     }
-
-    // Handle day click
-    function handleDayClick(date, dateStr) {
-        // Admin mode - toggle occupation
-        if (isAdminMode) {
-            toggleDateOccupation(dateStr);
-            renderCalendar();
-            return;
+    
+    @keyframes slideOut {
+        from {
+            transform: translateX(0);
+            opacity: 1;
         }
-
-        // Check if date is available for booking
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        
-        if (date < today || isTooSoon(date) || isDateOccupied(dateStr)) {
-            return; // Date not available
-        }
-
-        // Guest mode - select check-in/check-out
-        if (!selectedCheckIn || (selectedCheckIn && selectedCheckOut)) {
-            // Start new selection
-            selectedCheckIn = date;
-            selectedCheckOut = null;
-        } else if (selectedCheckIn && !selectedCheckOut) {
-            // Select check-out
-            if (date > selectedCheckIn) {
-                // Calculate nights
-                const nights = calculateNights(selectedCheckIn, date);
-                
-                // Check minimum nights requirement
-                if (nights < MIN_NIGHTS) {
-                    alert(`Il soggiorno minimo è di ${MIN_NIGHTS} notti. Hai selezionato ${nights} notte/i. Per favore seleziona almeno ${MIN_NIGHTS} notti.`);
-                    selectedCheckIn = null;
-                    selectedCheckOut = null;
-                    renderCalendar();
-                    return;
-                }
-                
-                // Check if any dates in range are occupied
-                let hasOccupied = false;
-                const tempDate = new Date(selectedCheckIn);
-                tempDate.setDate(tempDate.getDate() + 1);
-                
-                while (tempDate < date) {
-                    if (isDateOccupied(formatDate(tempDate))) {
-                        hasOccupied = true;
-                        break;
-                    }
-                    tempDate.setDate(tempDate.getDate() + 1);
-                }
-
-                if (hasOccupied) {
-                    alert('Una o più date nel periodo selezionato sono già occupate. Seleziona un altro periodo.');
-                    selectedCheckIn = null;
-                    selectedCheckOut = null;
-                } else {
-                    selectedCheckOut = date;
-                    updateBookingInfo();
-                }
-            } else {
-                // Date is before check-in, restart selection
-                selectedCheckIn = date;
-                selectedCheckOut = null;
-            }
-        }
-
-        renderCalendar();
-    }
-
-    // Update booking info display
-    function updateBookingInfo() {
-        const bookingInfoBox = document.getElementById('bookingInfoBox');
-        const checkInDate = document.getElementById('checkInDate');
-        const checkOutDate = document.getElementById('checkOutDate');
-        const nightsCount = document.getElementById('nightsCount');
-
-        if (!bookingInfoBox) return;
-
-        if (selectedCheckIn && selectedCheckOut) {
-            bookingInfoBox.style.display = 'block';
-            checkInDate.textContent = formatDisplayDate(selectedCheckIn);
-            checkOutDate.textContent = formatDisplayDate(selectedCheckOut);
-            nightsCount.textContent = calculateNights(selectedCheckIn, selectedCheckOut);
-
-            // Update form dates if form exists
-            const checkinInput = document.getElementById('checkin');
-            const checkoutInput = document.getElementById('checkout');
-            if (checkinInput) checkinInput.value = formatDate(selectedCheckIn);
-            if (checkoutInput) checkoutInput.value = formatDate(selectedCheckOut);
-        } else {
-            bookingInfoBox.style.display = 'none';
+        to {
+            transform: translateX(400px);
+            opacity: 0;
         }
     }
-
-    // Previous month
-    function prevMonth() {
-        currentMonth--;
-        if (currentMonth < 0) {
-            currentMonth = 11;
-            currentYear--;
-        }
-        renderCalendar();
-    }
-
-    // Next month
-    function nextMonth() {
-        currentMonth++;
-        if (currentMonth > 11) {
-            currentMonth = 0;
-            currentYear++;
-        }
-        renderCalendar();
-    }
-
-    // Toggle admin mode
-    function toggleAdminMode() {
-        isAdminMode = !isAdminMode;
-        const adminModeIndicator = document.getElementById('adminModeIndicator');
-        const toggleBtn = document.getElementById('toggleAdminMode');
-        
-        if (adminModeIndicator) {
-            if (isAdminMode) {
-                adminModeIndicator.textContent = '🔧 Modalità Admin';
-                adminModeIndicator.style.color = '#e74c3c';
-            } else {
-                adminModeIndicator.textContent = '👤 Modalità Ospite';
-                adminModeIndicator.style.color = '#27ae60';
-            }
-        }
-
-        if (toggleBtn) {
-            toggleBtn.innerHTML = isAdminMode 
-                ? '<i class="fas fa-toggle-off"></i> Disattiva Modalità Admin'
-                : '<i class="fas fa-toggle-on"></i> Attiva Modalità Admin';
-        }
-
-        // Clear selection when switching modes
-        selectedCheckIn = null;
-        selectedCheckOut = null;
-        renderCalendar();
-    }
-
-    // Save availability (admin)
-    function saveAvailability() {
-        if (!isAdminMode) return;
-        saveOccupiedDates();
-        alert('Disponibilità salvata con successo!');
-    }
-
-    // Export calendar data
-    function exportCalendar() {
-        const dataStr = JSON.stringify(occupiedDates, null, 2);
-        const dataBlob = new Blob([dataStr], { type: 'application/json' });
-        const url = URL.createObjectURL(dataBlob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `lacasadites-calendar-${formatDate(new Date())}.json`;
-        link.click();
-        URL.revokeObjectURL(url);
-    }
-
-    // Clear all occupied dates
-    function clearOccupied() {
-        if (!isAdminMode) return;
-        if (confirm('Sei sicuro di voler liberare tutte le date? Questa azione non può essere annullata.')) {
-            occupiedDates = [];
-            saveOccupiedDates();
-            renderCalendar();
-            alert('Tutte le date sono state liberate.');
-        }
-    }
-
-    // Reset date selection
-    function resetDates() {
-        selectedCheckIn = null;
-        selectedCheckOut = null;
-        renderCalendar();
-        updateBookingInfo();
-    }
-
-    // Book now - scroll to booking form
-    function bookNow() {
-        const bookingSection = document.getElementById('prenota');
-        if (bookingSection) {
-            bookingSection.scrollIntoView({ behavior: 'smooth' });
-        }
-    }
-
-    // Check if admin access is enabled
-    function checkAdminAccess() {
-        const urlParams = new URLSearchParams(window.location.search);
-        
-        // Check if URL has ?admin=true parameter
-        if (urlParams.get('admin') === 'true') {
-            document.body.classList.add('admin-mode');
-        } else {
-            document.body.classList.remove('admin-mode');
-        }
-    }
-
-    // Initialize calendar
-    function initCalendar() {
-        loadOccupiedDates();
-        checkAdminAccess(); // Check if admin panel should be visible
-        renderCalendar();
-
-        // Event listeners
-        const prevMonthBtn = document.getElementById('prevMonth');
-        const nextMonthBtn = document.getElementById('nextMonth');
-        const toggleAdminBtn = document.getElementById('toggleAdminMode');
-        const saveAvailabilityBtn = document.getElementById('saveAvailability');
-        const exportCalendarBtn = document.getElementById('exportCalendar');
-        const clearOccupiedBtn = document.getElementById('clearOccupied');
-        const resetDatesBtn = document.getElementById('resetDates');
-        const bookNowBtn = document.getElementById('bookNow');
-
-        if (prevMonthBtn) prevMonthBtn.addEventListener('click', prevMonth);
-        if (nextMonthBtn) nextMonthBtn.addEventListener('click', nextMonth);
-        if (toggleAdminBtn) toggleAdminBtn.addEventListener('click', toggleAdminMode);
-        if (saveAvailabilityBtn) saveAvailabilityBtn.addEventListener('click', saveAvailability);
-        if (exportCalendarBtn) exportCalendarBtn.addEventListener('click', exportCalendar);
-        if (clearOccupiedBtn) clearOccupiedBtn.addEventListener('click', clearOccupied);
-        if (resetDatesBtn) resetDatesBtn.addEventListener('click', resetDates);
-        if (bookNowBtn) bookNowBtn.addEventListener('click', bookNow);
-    }
-
-    // Initialize when DOM is ready
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initCalendar);
-    } else {
-        initCalendar();
-    }
-
-})();
+`;
+document.head.appendChild(style);
