@@ -2,7 +2,9 @@
   publish = "."
   command = ""
 
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
+# Abilita rilevamento automatico dei form
+[build.processing]
+  skip_processing = false
+
+[build.processing.html]
+  pretty_urls = true
