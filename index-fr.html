@@ -768,9 +768,14 @@
             <p class="section-subtitle">La Casa di Tes vous attend pour découvrir le cœur authentique de la Vallée d'Aoste</p>
             
             <div class="booking-content">
-                <div class="booking-form">
+                                <div class="booking-form">
                     <form id="contactForm" name="reservation-fr" method="POST" data-netlify="true" netlify-honeypot="bot-field">
                         <!-- Champ antispam caché -->
+                        <p style="display: none;">
+                            <label>Ne pas remplir si vous êtes humain: <input name="bot-field" /></label>
+                        </p>
+                        <div class="form-row">
+
                         <p style="display: none;">
                             <label>Ne pas remplir si vous êtes humain: <input name="bot-field" /></label>
                         </p>
