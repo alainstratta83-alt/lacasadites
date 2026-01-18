@@ -5,7 +5,7 @@
 
 // ⚙️ MINIMUM STAY CONFIGURATION
 // ====================================
-const MINIMUM_NIGHTS = 3; // 🔧 MODIFY THIS NUMBER TO CHANGE MINIMUM STAY
+const MINIMUM_NIGHTS = 5; // 🔧 MODIFY THIS NUMBER TO CHANGE MINIMUM STAY
 
 // ⚙️ ADVANCE NOTICE CONFIGURATION
 // ====================================
