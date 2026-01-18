@@ -5,7 +5,7 @@
 
 // ⚙️ CONFIGURATION SÉJOUR MINIMUM
 // ====================================
-const MINIMUM_NIGHTS = 3; // 🔧 MODIFIER CE NOMBRE POUR CHANGER LE SÉJOUR MINIMUM
+const MINIMUM_NIGHTS = 5; // 🔧 MODIFIER CE NOMBRE POUR CHANGER LE SÉJOUR MINIMUM
 
 // ⚙️ CONFIGURATION PRÉAVIS
 // ====================================
