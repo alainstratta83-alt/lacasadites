@@ -6,7 +6,7 @@ const ADMIN_CONFIG = {
     password: 'admin123',
     
     // Chiave per il localStorage
-    storageKey: 'lacasadites_occupied_dates',
+      storageKey: 'casadiTesOccupiedDates',
     sessionKey: 'lacasadites_admin_session'
 };
 
