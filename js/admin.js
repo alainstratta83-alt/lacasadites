@@ -3,7 +3,7 @@
 
 const ADMIN_CONFIG = {
     // 🔒 CAMBIA QUESTA PASSWORD!
-    password: 'admin123',
+    password: 'alain-67401983',
     
     // Chiave per il localStorage
       storageKey: 'casadiTesOccupiedDates',
