@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - La Casa di Tes</title>
+    <link rel="stylesheet" href="css/admin-style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-screen">
+        <div class="login-box">
+            <h1>🏔️ La Casa di Tes</h1>
+            <h2>Admin Panel</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="password">Password:</label>
+                    <input type="password" id="password" required autofocus>
+                </div>
+                <button type="submit" class="btn-login">Accedi</button>
+                <div id="loginError" class="error-message"></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Admin Panel -->
+    <div id="adminPanel" class="admin-panel" style="display: none;">
+        <header class="admin-header">
+            <div class="header-content">
+                <h1>🏔️ La Casa di Tes - Gestione Prenotazioni</h1>
+                <button id="logoutBtn" class="btn-logout">Esci</button>
+            </div>
+        </header>
+
+        <main class="admin-content">
+            <div class="stats-container">
+                <div class="stat-card">
+                    <div class="stat-icon">📅</div>
+                    <div class="stat-info">
+                        <div class="stat-label">Date Occupate</div>
+                        <div class="stat-value" id="occupiedCount">0</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">✅</div>
+                    <div class="stat-info">
+                        <div class="stat-label">Stato</div>
+                        <div class="stat-value">Attivo</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="calendar-container">
+                <div class="calendar-header">
+                    <button id="prevMonth" class="btn-nav">‹</button>
+                    <h2 id="currentMonth">Gennaio 2026</h2>
+                    <button id="nextMonth" class="btn-nav">›</button>
+                </div>
+                <div id="calendar" class="calendar-grid"></div>
+                <div class="calendar-legend">
+                    <div class="legend-item">
+                        <span class="legend-color available"></span>
+                        <span>Disponibile</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color occupied"></span>
+                        <span>Occupato (clicca per liberare)</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color past"></span>
+                        <span>Passato</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="actions-container">
+                <button id="saveBtn" class="btn-save">💾 Salva Modifiche</button>
+                <button id="clearAllBtn" class="btn-clear">🗑️ Cancella Tutte le Date</button>
+                <div id="saveMessage" class="save-message"></div>
+            </div>
+
+            <div class="occupied-dates-list">
+                <h3>📋 Date Occupate:</h3>
+                <div id="occupiedList" class="dates-list">
+                    <p class="empty-message">Nessuna data occupata</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/admin.js"></script>
+</body>
+</html>
