@@ -42,20 +42,18 @@ class BookingCalendar {
         this.updateBookingInfo();
     }
 
-    // Load occupied dates from API
+    // Load occupied dates from JSON file
     async loadOccupiedDates() {
         try {
-            const response = await fetch('/tables/occupied_dates?limit=1000');
+            const response = await fetch('/data/occupied-dates.json?t=' + Date.now());
             if (response.ok) {
-                const data = await response.json();
-                const dates = data.data.map(record => record.date);
+                const dates = await response.json();
                 console.log('📅 Date caricate dal server:', dates.length);
                 return new Set(dates);
             }
         } catch (error) {
             console.error('❌ Errore caricamento date:', error);
         }
-        // Fallback to empty set if API fails
         return new Set();
     }
 
