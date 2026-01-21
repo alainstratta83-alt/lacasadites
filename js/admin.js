@@ -3,7 +3,7 @@
 
 const ADMIN_CONFIG = {
     // 🔒 CAMBIA QUESTA PASSWORD!
-    password: 'admin123',
+    password: 'alain-67401983',
     
     // API endpoint per le date (usa Table API di Netlify)
     apiEndpoint: '/tables/occupied_dates',
