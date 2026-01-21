@@ -32,10 +32,9 @@ class BookingCalendar {
 
     async loadOccupiedDates() {
         try {
-            const response = await fetch('/tables/occupied_dates?limit=1000');
+            const response = await fetch('/data/occupied-dates.json?t=' + Date.now());
             if (response.ok) {
-                const data = await response.json();
-                const dates = data.data.map(record => record.date);
+                const dates = await response.json();
                 console.log('📅 Dates loaded from server:', dates.length);
                 return new Set(dates);
             }
