@@ -16,31 +16,33 @@ class BookingCalendar {
         this.currentDate = new Date();
         this.selectedStartDate = null;
         this.selectedEndDate = null;
-        this.occupiedDates = this.loadOccupiedDates();
+        this.occupiedDates = new Set();
         this.adminMode = false;
         this.minimumNights = MINIMUM_NIGHTS;
         this.advanceNoticeDays = ADVANCE_NOTICE_DAYS;
         this.init();
     }
 
-    init() {
+    async init() {
+        this.occupiedDates = await this.loadOccupiedDates();
         this.renderCalendar();
         this.setupEventListeners();
         this.updateBookingInfo();
     }
 
-    loadOccupiedDates() {
-        const saved = localStorage.getItem('casadiTesOccupiedDates');
-        if (saved) {
-            return new Set(JSON.parse(saved));
+    async loadOccupiedDates() {
+        try {
+            const response = await fetch('/tables/occupied_dates?limit=1000');
+            if (response.ok) {
+                const data = await response.json();
+                const dates = data.data.map(record => record.date);
+                console.log('📅 Dates loaded from server:', dates.length);
+                return new Set(dates);
+            }
+        } catch (error) {
+            console.error('❌ Error loading dates:', error);
         }
-        return new Set([
-            '2026-01-15',
-            '2026-01-16',
-            '2026-01-17',
-            '2026-02-14',
-            '2026-02-15',
-        ]);
+        return new Set();
     }
 
     saveOccupiedDates() {
