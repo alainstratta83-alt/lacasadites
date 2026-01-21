@@ -5,8 +5,8 @@ const ADMIN_CONFIG = {
     // 🔒 CAMBIA QUESTA PASSWORD!
     password: 'admin123',
     
-    // API endpoint per le date (usa Table API di Netlify)
-    apiEndpoint: '/tables/occupied_dates',
+    // JSON file endpoint
+    jsonEndpoint: '/data/occupied-dates.json',
     sessionKey: 'lacasadites_admin_session'
 };
 
@@ -46,14 +46,17 @@ class AdminCalendar {
         });
 
         // Save button
-        document.getElementById('saveBtn').addEventListener('click', async () => {
-            await this.saveOccupiedDates();
+        document.getElementById('saveBtn').addEventListener('click', () => {
+            this.generateJSON();
         });
 
         // Clear all button
-        document.getElementById('clearAllBtn').addEventListener('click', async () => {
+        document.getElementById('clearAllBtn').addEventListener('click', () => {
             if (confirm('⚠️ Sei sicuro di voler cancellare TUTTE le date occupate?')) {
-                await this.clearAllDates();
+                this.occupiedDates = [];
+                this.renderCalendar();
+                this.updateOccupiedList();
+                this.generateJSON();
             }
         });
     }
@@ -89,10 +92,10 @@ class AdminCalendar {
 
     async loadOccupiedDates() {
         try {
-            const response = await fetch(`${ADMIN_CONFIG.apiEndpoint}?limit=1000`);
+            const response = await fetch(ADMIN_CONFIG.jsonEndpoint + '?t=' + Date.now());
             if (response.ok) {
-                const data = await response.json();
-                this.occupiedDates = data.data.map(record => record.date);
+                const dates = await response.json();
+                this.occupiedDates = dates || [];
                 console.log('📅 Date caricate:', this.occupiedDates.length);
             } else {
                 console.error('❌ Errore caricamento date');
@@ -104,66 +107,37 @@ class AdminCalendar {
         }
     }
 
-    async saveOccupiedDates() {
-        try {
-            this.showMessage('⏳ Salvataggio in corso...', 'info');
-            
-            // 1. Carica tutte le date esistenti
-            const response = await fetch(`${ADMIN_CONFIG.apiEndpoint}?limit=1000`);
-            const existingData = await response.json();
-            
-            // 2. Cancella tutte le date esistenti
-            for (const record of existingData.data) {
-                await fetch(`${ADMIN_CONFIG.apiEndpoint}/${record.id}`, {
-                    method: 'DELETE'
-                });
-            }
-            
-            // 3. Aggiungi le nuove date
-            for (const date of this.occupiedDates) {
-                await fetch(ADMIN_CONFIG.apiEndpoint, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        date: date,
-                        created_at: new Date().getTime()
-                    })
-                });
-            }
-            
-            this.showMessage('✅ Date salvate con successo!', 'success');
-            this.updateStats();
-            this.updateOccupiedList();
-            console.log('💾 Date salvate:', this.occupiedDates);
-        } catch (error) {
-            console.error('❌ Errore salvataggio:', error);
-            this.showMessage('❌ Errore nel salvataggio!', 'error');
-        }
-    }
+    generateJSON() {
+        const json = JSON.stringify(this.occupiedDates.sort(), null, 2);
+        
+        // Show instructions
+        const message = `
+📋 COPIA QUESTO JSON E AGGIORNALO SU GITHUB:
 
-    async clearAllDates() {
-        try {
-            this.showMessage('⏳ Cancellazione in corso...', 'info');
-            
-            const response = await fetch(`${ADMIN_CONFIG.apiEndpoint}?limit=1000`);
-            const data = await response.json();
-            
-            for (const record of data.data) {
-                await fetch(`${ADMIN_CONFIG.apiEndpoint}/${record.id}`, {
-                    method: 'DELETE'
-                });
-            }
-            
-            this.occupiedDates = [];
-            this.renderCalendar();
-            this.updateOccupiedList();
-            this.showMessage('✅ Tutte le date cancellate!', 'success');
-        } catch (error) {
-            console.error('❌ Errore:', error);
-            this.showMessage('❌ Errore nella cancellazione!', 'error');
-        }
+1. Vai su: https://github.com/alainstratta83-alt/lacasadites/blob/main/data/occupied-dates.json
+2. Clicca Edit (✏️)
+3. CANCELLA tutto il contenuto
+4. INCOLLA questo JSON:
+
+${json}
+
+5. Commit: "Aggiornato date occupate"
+6. Salva
+
+Dopo 1-2 minuti le date saranno visibili a tutti! ✅
+        `;
+        
+        alert(message);
+        
+        // Copy to clipboard
+        navigator.clipboard.writeText(json).then(() => {
+            this.showMessage('✅ JSON copiato negli appunti!', 'success');
+        }).catch(() => {
+            this.showMessage('📋 JSON generato! Segui le istruzioni.', 'info');
+        });
+        
+        console.log('📋 JSON da caricare su GitHub:');
+        console.log(json);
     }
 
     showMessage(text, type) {
@@ -175,7 +149,7 @@ class AdminCalendar {
             setTimeout(() => {
                 messageDiv.textContent = '';
                 messageDiv.className = 'save-message';
-            }, 3000);
+            }, 5000);
         }
     }
 
@@ -290,6 +264,6 @@ class AdminCalendar {
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
     window.adminCalendar = new AdminCalendar();
-    console.log('🔐 Admin Panel inizializzato (API-based)');
+    console.log('🔐 Admin Panel inizializzato (JSON-based)');
     console.log('⚠️ Password di default: admin123 - CAMBIALA nel file admin.js!');
 });
