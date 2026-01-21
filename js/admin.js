@@ -3,24 +3,24 @@
 
 const ADMIN_CONFIG = {
     // 🔒 CAMBIA QUESTA PASSWORD!
-    password: 'alain-67401983',
+    password: 'admin123',
     
-    // Chiave per il localStorage
-      storageKey: 'casadiTesOccupiedDates',
+    // API endpoint per le date (usa Table API di Netlify)
+    apiEndpoint: '/tables/occupied_dates',
     sessionKey: 'lacasadites_admin_session'
 };
 
 class AdminCalendar {
     constructor() {
         this.currentDate = new Date();
-        this.occupiedDates = this.loadOccupiedDates();
+        this.occupiedDates = [];
         this.init();
     }
 
-    init() {
+    async init() {
         // Check if already logged in
         if (sessionStorage.getItem(ADMIN_CONFIG.sessionKey) === 'true') {
-            this.showAdminPanel();
+            await this.showAdminPanel();
         }
 
         // Login form
@@ -46,17 +46,14 @@ class AdminCalendar {
         });
 
         // Save button
-        document.getElementById('saveBtn').addEventListener('click', () => {
-            this.saveOccupiedDates();
+        document.getElementById('saveBtn').addEventListener('click', async () => {
+            await this.saveOccupiedDates();
         });
 
         // Clear all button
-        document.getElementById('clearAllBtn').addEventListener('click', () => {
+        document.getElementById('clearAllBtn').addEventListener('click', async () => {
             if (confirm('⚠️ Sei sicuro di voler cancellare TUTTE le date occupate?')) {
-                this.occupiedDates = [];
-                this.saveOccupiedDates();
-                this.renderCalendar();
-                this.updateOccupiedList();
+                await this.clearAllDates();
             }
         });
     }
@@ -82,24 +79,91 @@ class AdminCalendar {
         document.getElementById('loginError').textContent = '';
     }
 
-    showAdminPanel() {
+    async showAdminPanel() {
         document.getElementById('loginScreen').style.display = 'none';
         document.getElementById('adminPanel').style.display = 'block';
+        await this.loadOccupiedDates();
         this.renderCalendar();
         this.updateOccupiedList();
     }
 
-    loadOccupiedDates() {
-        const stored = localStorage.getItem(ADMIN_CONFIG.storageKey);
-        return stored ? JSON.parse(stored) : [];
+    async loadOccupiedDates() {
+        try {
+            const response = await fetch(`${ADMIN_CONFIG.apiEndpoint}?limit=1000`);
+            if (response.ok) {
+                const data = await response.json();
+                this.occupiedDates = data.data.map(record => record.date);
+                console.log('📅 Date caricate:', this.occupiedDates.length);
+            } else {
+                console.error('❌ Errore caricamento date');
+                this.occupiedDates = [];
+            }
+        } catch (error) {
+            console.error('❌ Errore:', error);
+            this.occupiedDates = [];
+        }
     }
 
-    saveOccupiedDates() {
-        localStorage.setItem(ADMIN_CONFIG.storageKey, JSON.stringify(this.occupiedDates));
-        this.showMessage('✅ Date salvate con successo!', 'success');
-        this.updateStats();
-        this.updateOccupiedList();
-        console.log('📅 Date salvate:', this.occupiedDates);
+    async saveOccupiedDates() {
+        try {
+            this.showMessage('⏳ Salvataggio in corso...', 'info');
+            
+            // 1. Carica tutte le date esistenti
+            const response = await fetch(`${ADMIN_CONFIG.apiEndpoint}?limit=1000`);
+            const existingData = await response.json();
+            
+            // 2. Cancella tutte le date esistenti
+            for (const record of existingData.data) {
+                await fetch(`${ADMIN_CONFIG.apiEndpoint}/${record.id}`, {
+                    method: 'DELETE'
+                });
+            }
+            
+            // 3. Aggiungi le nuove date
+            for (const date of this.occupiedDates) {
+                await fetch(ADMIN_CONFIG.apiEndpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        date: date,
+                        created_at: new Date().getTime()
+                    })
+                });
+            }
+            
+            this.showMessage('✅ Date salvate con successo!', 'success');
+            this.updateStats();
+            this.updateOccupiedList();
+            console.log('💾 Date salvate:', this.occupiedDates);
+        } catch (error) {
+            console.error('❌ Errore salvataggio:', error);
+            this.showMessage('❌ Errore nel salvataggio!', 'error');
+        }
+    }
+
+    async clearAllDates() {
+        try {
+            this.showMessage('⏳ Cancellazione in corso...', 'info');
+            
+            const response = await fetch(`${ADMIN_CONFIG.apiEndpoint}?limit=1000`);
+            const data = await response.json();
+            
+            for (const record of data.data) {
+                await fetch(`${ADMIN_CONFIG.apiEndpoint}/${record.id}`, {
+                    method: 'DELETE'
+                });
+            }
+            
+            this.occupiedDates = [];
+            this.renderCalendar();
+            this.updateOccupiedList();
+            this.showMessage('✅ Tutte le date cancellate!', 'success');
+        } catch (error) {
+            console.error('❌ Errore:', error);
+            this.showMessage('❌ Errore nella cancellazione!', 'error');
+        }
     }
 
     showMessage(text, type) {
@@ -107,10 +171,12 @@ class AdminCalendar {
         messageDiv.textContent = text;
         messageDiv.className = `save-message ${type}`;
         
-        setTimeout(() => {
-            messageDiv.textContent = '';
-            messageDiv.className = 'save-message';
-        }, 3000);
+        if (type !== 'info') {
+            setTimeout(() => {
+                messageDiv.textContent = '';
+                messageDiv.className = 'save-message';
+            }, 3000);
+        }
     }
 
     updateStats() {
@@ -224,6 +290,6 @@ class AdminCalendar {
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
     window.adminCalendar = new AdminCalendar();
-    console.log('🔐 Admin Panel inizializzato');
+    console.log('🔐 Admin Panel inizializzato (API-based)');
     console.log('⚠️ Password di default: admin123 - CAMBIALA nel file admin.js!');
 });
