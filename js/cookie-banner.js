@@ -96,7 +96,7 @@ class CookieBanner {
     }
 }
 
-// CSS Styles for Cookie Banner (prevent duplicate loading)
+// CSS Styles for Cookie Banner (with duplicate prevention)
 if (!document.getElementById('cookie-banner-style')) {
     const style = document.createElement('style');
     style.id = 'cookie-banner-style';
@@ -162,52 +162,4 @@ if (!document.getElementById('cookie-banner-style')) {
         
         .cookie-accept-btn {
             padding: 12px 30px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            white-space: nowrap;
-        }
-        
-        .cookie-accept-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-        }
-        
-        @media (max-width: 768px) {
-            .cookie-banner {
-                padding: 15px;
-            }
-            
-            .cookie-banner-content {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            
-            .cookie-banner-text {
-                min-width: 100%;
-            }
-            
-            .cookie-accept-btn {
-                width: 100%;
-            }
-        }
-    `;
-    document.head.appendChild(style);
-}
-
-// Initialize cookie banner when DOM is ready (prevent duplicate initialization)
-if (!window.cookieBannerInitialized) {
-    window.cookieBannerInitialized = true;
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => {
-            new CookieBanner();
-        });
-    } else {
-        new CookieBanner();
-    }
-}
+            background: linear-gradient(135deg, #667eea 0%, #764ba2<span class="cursor">█</span>
