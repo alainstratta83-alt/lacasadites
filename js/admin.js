@@ -3,7 +3,7 @@
 
 const ADMIN_CONFIG = {
     // 🔒 CAMBIA QUESTA PASSWORD!
-    password: 'admin123',
+    password: 'alain-67401983',
     
     // JSON file endpoint
     jsonEndpoint: '/data/occupied-dates.json',
